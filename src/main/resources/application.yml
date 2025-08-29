@@ -1,0 +1,10 @@
+spring:
+  datasource:
+    url: postgresql://aws-0-us-east-2.pooler.supabase.com:6543/postgres
+    username: username
+    password: password
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
