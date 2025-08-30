@@ -1,17 +1,17 @@
-# Quiz Application Backend
+# Reflectly Application Backend
 
 This is a Spring Boot application that provides a RESTful API for managing quizzes, including CRUD (Create, Read, Update, Delete) operations. It also integrates Google OAuth2 for user authentication, ensuring that only authenticated users can access the API.
 
 ## Features
 
-* **Quiz Management:**
+* **Reflectly Management:**
     * Create new quizzes.
     * Retrieve quizzes by ID or list all quizzes.
     * Update existing quizzes.
     * Delete quizzes.
 * **Google OAuth2 Login:** Secure user authentication using Google as an OAuth2 provider.
 * **RESTful API:** Clean and well-structured API endpoints.
-* **Database Integration:** Configurable for  PostgreSQL (for production/persistent data).
+* **Database Integration:** Configurable for PostgreSQL (for production/persistent data).
 
 ## Technologies Used
 
