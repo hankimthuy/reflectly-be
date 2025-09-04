@@ -11,7 +11,8 @@
     <groupId>org.mentorship</groupId>
     <artifactId>reflectly-be</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>reflectly-be</name><description>reflectly-be</description>
+    <name>reflectly-be</name>
+    <description>reflectly-be</description>
     <url/>
     <licenses>
         <license/>
@@ -39,7 +40,7 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
         </dependency>
 
         <dependency>
