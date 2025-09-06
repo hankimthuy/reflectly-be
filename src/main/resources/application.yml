@@ -9,6 +9,6 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   security:
     oauth2:
-      resourceserver:
+      resource server:
         jwt:
           issuer-uri: https://accounts.google.com
