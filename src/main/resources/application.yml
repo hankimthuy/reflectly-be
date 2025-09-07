@@ -1,12 +1,10 @@
+server:
+  port: 8081
 spring:
   datasource:
     url: jdbc:postgresql://aws-0-us-east-2.pooler.supabase.com:6543/postgres
     username: username
     password: password
-  jpa:
-    hibernate:
-      ddl-auto: update
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
   security:
     oauth2:
       resource server:
