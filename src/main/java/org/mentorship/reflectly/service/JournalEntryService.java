@@ -2,9 +2,7 @@
 package org.mentorship.reflectly.service;
 
 import org.mentorship.reflectly.model.JournalEntryEntity;
-import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.repository.JournalEntryRepository;
-import org.mentorship.reflectly.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

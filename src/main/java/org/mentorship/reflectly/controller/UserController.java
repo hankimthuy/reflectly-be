@@ -2,7 +2,6 @@ package org.mentorship.reflectly.controller;
 
 import org.mentorship.reflectly.DTO.AuthResponseDto;
 import org.mentorship.reflectly.DTO.GoogleTokenDto;
-import org.mentorship.reflectly.repository.JournalEntryRepository;
 import org.mentorship.reflectly.service.AuthService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

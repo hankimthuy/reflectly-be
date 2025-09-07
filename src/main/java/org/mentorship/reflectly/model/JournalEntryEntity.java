@@ -4,11 +4,8 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter; // Vẫn import để dùng cho AccessLevel cụ thể
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import lombok.Setter;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
@@ -53,14 +50,6 @@ public class JournalEntryEntity {
             inverseJoinColumns = @JoinColumn(name = "factor_id")
     )
     private Set<FactorEntity> factors = new HashSet<>();
-
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private Instant updatedAt;
 
     // Enum for Mood remains the same
     public enum Mood {

@@ -4,10 +4,7 @@ import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
-import java.time.Instant;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
@@ -45,14 +42,6 @@ public class UserEntity {
     )
     private Set<JournalEntryEntity> journalEntries = new HashSet<>();
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private Instant createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private Instant updatedAt;
-
     // --- Constructor ---
 
     /**
@@ -60,7 +49,6 @@ public class UserEntity {
      * @param email User's email address (business key).
      * @param fullName User's full name.
      * @param pictureUrl URL to the user's profile picture.
-     * @param authProvider The provider used for authentication (e.g., "GOOGLE").
      */
     public UserEntity(String email, String fullName, String pictureUrl) {
         this.email = Objects.requireNonNull(email, "Email cannot be null");
