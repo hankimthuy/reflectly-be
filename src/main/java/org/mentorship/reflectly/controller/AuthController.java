@@ -14,12 +14,12 @@ import java.security.GeneralSecurityException;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/users")
-public class UserController {
+@RequestMapping("/api/auth")
+public class AuthController {
 
     private final AuthService authService;
 
-    public UserController(AuthService authService) {
+    public AuthController(AuthService authService) {
         this.authService = authService;
     }
 
@@ -29,9 +29,11 @@ public class UserController {
             AuthResponseDto response = authService.processGoogleLogin(tokenDto.idToken());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
+            System.err.println("Verify token: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
+            System.err.println("ERROR verify token: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
