@@ -1,6 +1,10 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/reflectly_db
-    username: posgres
+    url: jdbc:postgresql://localhost:5432/reflectly
+    username: postgres
     password: zxc123
     driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
