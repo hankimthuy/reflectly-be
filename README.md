@@ -47,43 +47,45 @@ git clone https://github.com/hankimthuy/reflectly-be.git
 cd reflectly-be
 ````
 
-### 2. Database Configuration
+### 2. Environment Configuration
 
-1.  **Add PostgreSQL dependency to `pom.xml`:**
-    ```xml
-    <dependency>
-        <groupId>org.postgresql</groupId>
-        <artifactId>postgresql</artifactId>
-        <scope>runtime</scope>
-    </dependency>
-    ```
-2.  **Update `src/main/resources/application.properties`:**
-    ```properties
-    spring.datasource.url=jdbc:postgresql://localhost:5432/quiz_db
-    spring.datasource.username=quizuser
-    spring.datasource.password=quizpassword
-    spring.datasource.driver-class-name=org.postgresql.Driver
-    spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
-    spring.jpa.hibernate.ddl-auto=update # Use 'create' or 'create-drop' for fresh starts, 'update' for existing schema
-    ```
-3.  **Run PostgreSQL with Docker (if not already running):**
-    ```bash
-    docker run --name some-postgres -e POSTGRES_USER=quizuser -e POSTGRES_PASSWORD=quizpassword -e POSTGRES_DB=quiz_db -p 5432:5432 -d postgres:13
-    ```
+**IMPORTANT SECURITY NOTE:** This application uses environment variables for sensitive configuration to avoid hardcoded credentials.
 
-### 3. Google OAuth Configuration
+1. **Create a `.env` file in the project root:**
+   ```bash
+   # Database Configuration
+   DB_URL=jdbc:postgresql://localhost:5432/reflectly
+   DB_USERNAME=postgres
+   DB_PASSWORD=your_secure_password_here
+   
+   # JWT Configuration
+   JWT_SECRET=your_jwt_secret_key_here_minimum_32_characters
+   JWT_EXPIRATION=86400000
+   
+   # Spring Profile (optional)
+   SPRING_PROFILES_ACTIVE=local
+   ```
 
-Add your Google OAuth2 credentials to `src/main/resources/application.properties`:
+2. **Set up PostgreSQL database:**
+   ```bash
+   # Using Docker (recommended)
+   docker run --name reflectly-postgres \
+     -e POSTGRES_USER=postgres \
+     -e POSTGRES_PASSWORD=your_secure_password_here \
+     -e POSTGRES_DB=reflectly \
+     -p 5432:5432 \
+     -d postgres:13
+   ```
 
-```properties
-# Google OAuth2 Configuration
-spring.security.oauth2.client.registration.google.client-id=<YOUR_GOOGLE_CLIENT_ID>
-spring.security.oauth2.client.registration.google.client-secret=<YOUR_GOOGLE_CLIENT_SECRET>
-spring.security.oauth2.client.registration.google.redirect-uri={baseUrl}/login/oauth2/code/{registrationId}
-spring.security.oauth2.client.registration.google.scope=openid,profile,email
-```
+3. **Security Best Practices:**
+   - Never commit `.env` files to version control
+   - Use strong, unique passwords for database access
+   - Generate a secure JWT secret (minimum 32 characters)
+   - Use different credentials for different environments (dev, staging, production)
 
-Replace `<YOUR_GOOGLE_CLIENT_ID>` and `<YOUR_GOOGLE_CLIENT_SECRET>` with your actual credentials.
+### 3. Google Authentication
+
+This application uses Google ID Token verification for authentication. The application validates Google ID tokens sent from the frontend without requiring OAuth2 client configuration.
 
 ```bash
 docker-compose up -d
@@ -106,13 +108,3 @@ The application will start on `http://localhost:8081`.
 ## API Endpoints
 
 The Quiz API provides the following RESTful endpoints. All endpoints require authentication (via Google OAuth2).
-
-### Quiz Endpoints (`/api/quizzes`)
-
-| Method | Endpoint | Description | Request Body (JSON) | Response Body (JSON) |
-| :----- | :------- | :---------- | :------------------ | :------------------- |
-| `POST` | `/api/quizzes` | Create a new quiz. | `{ "title": "New Quiz", "description": "..." }` | `Quiz` object (with generated ID) |
-| `GET` | `/api/quizzes` | Get all quizzes. | None | List of `Quiz` objects |
-| `GET` | `/api/quizzes/{id}` | Get a quiz by its ID. | None | `Quiz` object |
-| `PUT` | `/api/quizzes/{id}` | Update an existing quiz. | `{ "title": "Updated Title", "description": "..."}` | Updated `Quiz` object |
-| `DELETE` | `/api/quizzes/{id}` | Delete a quiz by its ID. | None | No Content (204) |

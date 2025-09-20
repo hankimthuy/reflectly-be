@@ -13,9 +13,9 @@ spring:
       enabled: true
       force: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/reflectly
-    username: postgres
-    password: zxc123
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/reflectly}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -39,5 +39,5 @@ springdoc:
 
 # JWT Configuration
 jwt:
-  secret: mySecretKey123456789012345678901234567890
-  expiration: 86400000 # 24 hours in milliseconds
+  secret: ${JWT_SECRET:}
+  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
