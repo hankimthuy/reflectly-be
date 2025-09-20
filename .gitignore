@@ -34,5 +34,3 @@ build/
 
 ### Environment Variables ###
 .env
-.env.local
-.env.*.local
