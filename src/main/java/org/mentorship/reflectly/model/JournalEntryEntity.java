@@ -21,7 +21,7 @@ import java.util.Set;
         @Index(name = "idx_user_entry_date", columnList = "user_id, entry_date")
 })
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED) // For JPA persistence framework
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class JournalEntryEntity {
 
     @Id
@@ -56,16 +56,12 @@ public class JournalEntryEntity {
         VERY_HAPPY, HAPPY, NEUTRAL, SAD, VERY_SAD
     }
 
-    // --- Constructor ---
-
     public JournalEntryEntity(UserEntity user, LocalDate entryDate, Mood mood, String content) {
         this.user = Objects.requireNonNull(user, "User cannot be null");
         this.entryDate = Objects.requireNonNull(entryDate, "Entry date cannot be null");
         this.mood = Objects.requireNonNull(mood, "Mood cannot be null");
         this.content = content;
     }
-
-    // --- Business Logic Methods ---
 
     /**
      * Updates the core details of the journal entry.
@@ -108,8 +104,6 @@ public class JournalEntryEntity {
     public Set<FactorEntity> getFactors() {
         return Collections.unmodifiableSet(factors);
     }
-
-    // --- equals() and hashCode() ---
 
     @Override
     public boolean equals(Object o) {

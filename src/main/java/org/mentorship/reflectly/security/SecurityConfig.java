@@ -18,6 +18,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+    
+    // Request → GoogleAuthenticationFilter → GoogleAuthenticationToken → SecurityContext
 
     private final GoogleAuthenticationFilter googleAuthenticationFilter;
 

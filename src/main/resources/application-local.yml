@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/reflectly}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL:jdbc:postgresql://ep-patient-meadow-a1sqfz0o-pooler.ap-southeast-1.aws.neon.tech/neondb?user=neondb_owner&password=npg_P13fvARrJxiF&sslmode=require&channelBinding=require}
+    username: ${DB_USERNAME:neondb_owner}
+    password: ${DB_PASSWORD:npg_P13fvARrJxiF}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:

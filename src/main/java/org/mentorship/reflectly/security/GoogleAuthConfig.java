@@ -11,13 +11,8 @@ public class GoogleAuthConfig {
 
     @Bean
     public GoogleIdTokenVerifier googleIdTokenVerifier() {
-        // --- CẢNH BÁO BẢO MẬT ---
-        // Cấu hình này chỉ kiểm tra chữ ký của Google (Issuer) và thời gian hết hạn (Expiration).
-        // Nó KHÔNG kiểm tra token này được cấp cho ứng dụng nào (Audience).
-        // KHÔNG SỬ DỤNG TRONG PRODUCTION.
 
         return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                // Không gọi .setAudience() ở đây
                 .build();
     }
 }

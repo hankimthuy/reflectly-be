@@ -44,19 +44,11 @@ public class UserEntity {
 
     // --- Constructor ---
 
-    /**
-     * Creates a new user instance. Enforces required fields upon creation.
-     * @param email User's email address (business key).
-     * @param fullName User's full name.
-     * @param pictureUrl URL to the user's profile picture.
-     */
     public UserEntity(String email, String fullName, String pictureUrl) {
         this.email = Objects.requireNonNull(email, "Email cannot be null");
         this.fullName = fullName;
         this.pictureUrl = pictureUrl;
     }
-
-    // --- Business Logic Methods ---
 
     /**
      * Updates user profile information based on new data.

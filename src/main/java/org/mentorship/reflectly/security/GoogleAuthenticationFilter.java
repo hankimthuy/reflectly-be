@@ -1,21 +1,18 @@
 package org.mentorship.reflectly.security;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.mentorship.reflectly.model.UserEntity;
-import org.mentorship.reflectly.repository.UserRepository;
-import org.mentorship.reflectly.service.JwtService;
+import org.mentorship.reflectly.service.AuthService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.Map;
 
 /**
  * Google Authentication Filter that processes Google ID tokens.
@@ -25,22 +22,15 @@ import java.util.Map;
  * 1. Extract Google ID token from Authorization header
  * 2. Validate Google ID token
  * 3. Find or create user in database
- * 4. Generate internal JWT token
- * 5. Set authentication context
+ * 4. Set authentication context
  */
 @Component
 public class GoogleAuthenticationFilter extends OncePerRequestFilter {
 
-    private final GoogleIdTokenVerifier googleVerifier;
-    private final UserRepository userRepository;
-    private final JwtService jwtService;
+    private final AuthService authService;
 
-    public GoogleAuthenticationFilter(GoogleIdTokenVerifier googleVerifier, 
-                                   UserRepository userRepository, 
-                                   JwtService jwtService) {
-        this.googleVerifier = googleVerifier;
-        this.userRepository = userRepository;
-        this.jwtService = jwtService;
+    public GoogleAuthenticationFilter(AuthService authService) {
+        this.authService = authService;
     }
 
     @Override
@@ -53,7 +43,7 @@ public class GoogleAuthenticationFilter extends OncePerRequestFilter {
             String authHeader = request.getHeader("Authorization");
             
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String googleIdToken = authHeader.substring(7); // Remove "Bearer " prefix
+                String googleIdToken = authHeader.substring(7);
                 
                 // Process Google authentication
                 processGoogleAuthentication(googleIdToken);
@@ -73,56 +63,18 @@ public class GoogleAuthenticationFilter extends OncePerRequestFilter {
     }
 
     /**
-     * Process Google ID token authentication
+     * Process Google ID token authentication using AuthService
      */
     private void processGoogleAuthentication(String googleIdToken) throws GeneralSecurityException, IOException {
-        GoogleIdToken idToken = googleVerifier.verify(googleIdToken);
-        if (idToken == null) {
-            throw new IllegalArgumentException("Invalid Google ID Token");
-        }
+        // Use AuthService to validate token and get payload
+        GoogleIdToken.Payload payload = authService.validateGoogleToken(googleIdToken);
         
-        GoogleIdToken.Payload payload = idToken.getPayload();
-        UserEntity user = findOrCreateUser(payload);
-        
-        String internalJwtToken = jwtService.generateToken(payload.getEmail(), Map.of(
-            "userId", user.getId().toString(),
-            "fullName", user.getFullName(),
-            "pictureUrl", user.getPictureUrl()
-        ));
-        
-        SecurityContextHolder.getContext().setAuthentication(
-            new GoogleAuthenticationToken(user, googleIdToken, internalJwtToken)
-        );
-    }
+        // Use AuthService to find or create user
+        UserEntity user = authService.findOrCreateUser(payload);
 
-    /**
-     * Find existing user by email or create a new one
-     */
-    private UserEntity findOrCreateUser(GoogleIdToken.Payload payload) {
-        String email = payload.getEmail();
-        String fullName = getStringOrEmpty(payload, "name");
-        String pictureUrl = getStringOrEmpty(payload, "picture");
-        
-        return userRepository.findByEmail(email)
-            .map(user -> {
-                // Update existing user with safe values
-                String safeFullName = fullName.isEmpty() ? user.getFullName() : fullName;
-                String safePictureUrl = pictureUrl.isEmpty() ? user.getPictureUrl() : pictureUrl;
-                user.updateProfile(safeFullName, safePictureUrl);
-                return userRepository.save(user);
-            })
-            .orElseGet(() -> {
-                // Create new user
-                UserEntity newUser = new UserEntity(email, fullName, pictureUrl);
-                return userRepository.save(newUser);
-            });
-    }
-    
-    /**
-     * Extract string value from payload or return empty string if null
-     */
-    private String getStringOrEmpty(GoogleIdToken.Payload payload, String key) {
-        String value = (String) payload.get(key);
-        return value != null ? value : "";
+        // Set authentication context
+        SecurityContextHolder.getContext().setAuthentication(
+            new GoogleAuthenticationToken(user, googleIdToken)
+        );
     }
 }
