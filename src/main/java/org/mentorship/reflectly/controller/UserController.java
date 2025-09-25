@@ -15,12 +15,11 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/users")
-@Tag(name = "Authentication", description = "Authentication and user management APIs")
+@Tag(name = "Users", description = "User management APIs")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
-
 
     @Operation(
         summary = "Get user profile", 

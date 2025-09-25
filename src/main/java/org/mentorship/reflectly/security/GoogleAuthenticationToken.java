@@ -17,10 +17,10 @@ public class GoogleAuthenticationToken extends UsernamePasswordAuthenticationTok
     @Getter
     private final UserEntity user;
     private final String googleIdToken;
-    private boolean authenticated = true;
+    private boolean authenticated;
 
     public GoogleAuthenticationToken(UserEntity user, String googleIdToken) {
-        super(user, null, Collections.<GrantedAuthority>emptyList());
+        super(user, null, Collections.emptyList());
         this.user = user;
         this.googleIdToken = googleIdToken;
         this.authenticated = true;

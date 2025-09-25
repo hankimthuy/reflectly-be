@@ -32,30 +32,30 @@ public class GoogleAuthenticationFilter extends OncePerRequestFilter {
     private final UserService userService;
 
     @Override
-    protected void doFilterInternal(@NonNull HttpServletRequest request, 
-                                  @NonNull HttpServletResponse response, 
-                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
-        
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    @NonNull HttpServletResponse response,
+                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+
         try {
             // Extract Google ID token from Authorization header
             String authHeader = request.getHeader("Authorization");
-            
+
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
                 String googleIdToken = authHeader.substring(7);
-                
+
                 // Process Google authentication
                 processGoogleAuthentication(googleIdToken);
                 logger.info("Google authentication successful for request: " + request.getRequestURI());
             } else {
                 logger.debug("No valid Authorization header found for request: " + request.getRequestURI());
             }
-            
+
         } catch (Exception e) {
             // Log error and clear any existing authentication
             logger.warn("Google authentication failed for request " + request.getRequestURI() + ": " + e.getMessage());
             SecurityContextHolder.clearContext();
         }
-        
+
         // Continue with the filter chain
         filterChain.doFilter(request, response);
     }
@@ -66,13 +66,11 @@ public class GoogleAuthenticationFilter extends OncePerRequestFilter {
     private void processGoogleAuthentication(String googleIdToken) throws GeneralSecurityException, IOException {
         // Use AuthService to validate token and get payload
         GoogleIdToken.Payload payload = userService.validateGoogleToken(googleIdToken);
-        
+
         // Use AuthService to find or create user
         UserEntity user = userService.findOrCreateUser(payload);
 
         // Set authentication context
-        SecurityContextHolder.getContext().setAuthentication(
-            new GoogleAuthenticationToken(user, googleIdToken)
-        );
+        SecurityContextHolder.getContext().setAuthentication(new GoogleAuthenticationToken(user, googleIdToken));
     }
 }

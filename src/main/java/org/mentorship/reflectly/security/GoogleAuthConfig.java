@@ -11,8 +11,6 @@ public class GoogleAuthConfig {
 
     @Bean
     public GoogleIdTokenVerifier googleIdTokenVerifier() {
-
-        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance())
-                .build();
+        return new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), GsonFactory.getDefaultInstance()).build();
     }
 }

@@ -1,4 +1,3 @@
-// File: src/main/java/org/mentorship/reflectly/user/UserService.java
 package org.mentorship.reflectly.service;
 
 import lombok.RequiredArgsConstructor;
@@ -13,7 +12,6 @@ import java.util.List;
 public class JournalEntryService {
 
     private final JournalEntryRepository journalEntryRepository;
-
 
     public List<JournalEntryEntity> getAllJournalEntities() {
         return journalEntryRepository.findAll();

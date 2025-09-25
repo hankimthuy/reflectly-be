@@ -23,18 +23,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final GoogleIdTokenVerifier googleVerifier;
 
-
     /**
      * Find existing user by email or create a new one based on Google profile data
+     *
      * @param payload The decoded payload from the Google ID Token
      * @return The persisted User entity
      */
     @Transactional
     public UserEntity findOrCreateUser(GoogleIdToken.Payload payload) {
-        return getUserEntity(payload, userRepository);
-    }
-
-    static UserEntity getUserEntity(GoogleIdToken.Payload payload, UserRepository userRepository) {
         String email = payload.getEmail();
         Optional<UserEntity> existingUserOpt = userRepository.findByEmail(email);
 
@@ -50,18 +46,19 @@ public class UserService {
             }
 
             return userRepository.save(userToUpdate);
-        } else {
-            // Create new user
-            String fullName = (String) payload.get("name");
-            String pictureUrl = (String) payload.get("picture");
-
-            UserEntity newUser = new UserEntity(email, fullName, pictureUrl);
-            return userRepository.save(newUser);
         }
+        // Create new user
+        String fullName = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+
+        UserEntity newUser = new UserEntity(email, fullName, pictureUrl);
+        return userRepository.save(newUser);
     }
+
 
     /**
      * Validate Google ID token and return payload
+     *
      * @param googleIdTokenString The Google ID token
      * @return GoogleIdToken.Payload if valid
      */
@@ -75,18 +72,19 @@ public class UserService {
 
     /**
      * Get user profile from database based on authentication context
+     *
      * @param authentication Spring Security authentication object
      * @return UserProfileResponseDto containing user information from database
      */
     public UserProfileResponseDto getUserProfile(Authentication authentication) {
         if (authentication instanceof GoogleAuthenticationToken googleAuth) {
             Long userId = googleAuth.getUser().getId();
-            
+
             Optional<UserEntity> userOpt = userRepository.findById(userId);
-            
+
             if (userOpt.isPresent()) {
                 UserEntity user = userOpt.get();
-                return UserProfileResponseDto.of(
+                return new UserProfileResponseDto(
                         user.getId().toString(),
                         user.getEmail(),
                         user.getFullName(),
@@ -95,6 +93,6 @@ public class UserService {
             }
         }
 
-        return UserProfileResponseDto.of("", "", "", "");
+        return new UserProfileResponseDto("", "", "", "");
     }
 }
