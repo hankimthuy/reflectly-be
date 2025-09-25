@@ -37,7 +37,7 @@ Follow these steps to set up and run the Quiz Application locally.
     * Enable the "Google People API" (or relevant APIs for user info).
     * Go to "APIs & Services" -> "Credentials".
     * Create an "OAuth client ID" of type "Web application".
-    * Configure "Authorized JavaScript origins" (e.g., `http://localhost:8081~~~~~~~~`) and "Authorized redirect URIs" (e.g., `http://localhost:8080/login/oauth2/code/google`).
+    * Configure "Authorized JavaScript origins" (e.g., `http://localhost:8080~~~~~~~~~~~~`) and "Authorized redirect URIs" (e.g., `http://localhost:8080/login/oauth2/code/google`).
     * Note down your **Client ID** and **Client Secret**.
 
 ### 1. Clone the Repository
@@ -103,7 +103,7 @@ mvn clean install
 mvn spring-boot:run
 ```
 
-The application will start on `http://localhost:8081`.
+The application will start on `http://localhost:8080`.
 
 ## API Endpoints
 
