@@ -5,23 +5,22 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.DTO.UserProfileResponseDto;
 import org.mentorship.reflectly.constants.ApiResponseCodes;
-import org.mentorship.reflectly.service.AuthService;
+import org.mentorship.reflectly.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/users")
 @Tag(name = "Authentication", description = "Authentication and user management APIs")
-public class AuthController {
+@RequiredArgsConstructor
+public class UserController {
 
-    private final AuthService authService;
+    private final UserService userService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
 
     @Operation(
         summary = "Get user profile", 
@@ -32,8 +31,8 @@ public class AuthController {
         @ApiResponse(responseCode = ApiResponseCodes.UNAUTHORIZED, description = ApiResponseCodes.INVALID_GOOGLE_TOKEN)
     })
     @SecurityRequirement(name = "Bearer Authentication")
-    @GetMapping("/get-user-profile")
+    @GetMapping("/profile")
     public ResponseEntity<UserProfileResponseDto> getUserProfile(Authentication authentication) {
-        return ResponseEntity.ok(authService.getUserProfile(authentication));
+        return ResponseEntity.ok(userService.getUserProfile(authentication));
     }
 }

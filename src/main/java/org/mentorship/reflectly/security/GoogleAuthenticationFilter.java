@@ -5,8 +5,10 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.model.UserEntity;
-import org.mentorship.reflectly.service.AuthService;
+import org.mentorship.reflectly.service.UserService;
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -17,7 +19,6 @@ import java.security.GeneralSecurityException;
 /**
  * Google Authentication Filter that processes Google ID tokens.
  * This filter runs once per request and handles Google OAuth authentication.
- * 
  * Flow:
  * 1. Extract Google ID token from Authorization header
  * 2. Validate Google ID token
@@ -25,18 +26,15 @@ import java.security.GeneralSecurityException;
  * 4. Set authentication context
  */
 @Component
+@RequiredArgsConstructor
 public class GoogleAuthenticationFilter extends OncePerRequestFilter {
 
-    private final AuthService authService;
-
-    public GoogleAuthenticationFilter(AuthService authService) {
-        this.authService = authService;
-    }
+    private final UserService userService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, 
-                                  HttpServletResponse response, 
-                                  FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request, 
+                                  @NonNull HttpServletResponse response, 
+                                  @NonNull FilterChain filterChain) throws ServletException, IOException {
         
         try {
             // Extract Google ID token from Authorization header
@@ -67,10 +65,10 @@ public class GoogleAuthenticationFilter extends OncePerRequestFilter {
      */
     private void processGoogleAuthentication(String googleIdToken) throws GeneralSecurityException, IOException {
         // Use AuthService to validate token and get payload
-        GoogleIdToken.Payload payload = authService.validateGoogleToken(googleIdToken);
+        GoogleIdToken.Payload payload = userService.validateGoogleToken(googleIdToken);
         
         // Use AuthService to find or create user
-        UserEntity user = authService.findOrCreateUser(payload);
+        UserEntity user = userService.findOrCreateUser(payload);
 
         // Set authentication context
         SecurityContextHolder.getContext().setAuthentication(
