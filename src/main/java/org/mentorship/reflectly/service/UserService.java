@@ -1,19 +1,14 @@
-// File: src/main/java/org/mentorship/reflectly/user/UserService.java
 package org.mentorship.reflectly.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.DTO.UserProfileResponseDto;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.repository.UserRepository;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.Optional;
 
 @Service
@@ -21,7 +16,6 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final GoogleIdTokenVerifier googleVerifier;
 
     /**
      * Find existing user by email or create a new one based on Google profile data
@@ -55,44 +49,19 @@ public class UserService {
         return userRepository.save(newUser);
     }
 
-
-    /**
-     * Validate Google ID token and return payload
-     *
-     * @param googleIdTokenString The Google ID token
-     * @return GoogleIdToken.Payload if valid
-     */
-    public GoogleIdToken.Payload validateGoogleToken(String googleIdTokenString) throws GeneralSecurityException, IOException {
-        GoogleIdToken idToken = googleVerifier.verify(googleIdTokenString);
-        if (idToken == null) {
-            throw new IllegalArgumentException("Invalid Google ID Token.");
-        }
-        return idToken.getPayload();
-    }
-
     /**
      * Get user profile from database based on authentication context
      *
      * @param authentication Spring Security authentication object
      * @return UserProfileResponseDto containing user information from database
      */
-    public UserProfileResponseDto getUserProfile(Authentication authentication) {
-        if (authentication instanceof GoogleAuthenticationToken googleAuth) {
-            Long userId = googleAuth.getUser().getId();
-
-            Optional<UserEntity> userOpt = userRepository.findById(userId);
-
-            if (userOpt.isPresent()) {
-                UserEntity user = userOpt.get();
-                return new UserProfileResponseDto(
-                        user.getId().toString(),
-                        user.getEmail(),
-                        user.getFullName(),
-                        user.getPictureUrl()
-                );
-            }
-        }
-
-        return new UserProfileResponseDto("", "", "", "");
+    public UserProfileResponseDto getUserProfile(GoogleAuthenticationToken authentication) {
+        UserEntity user = authentication.getUser();
+        return new UserProfileResponseDto(
+                user.getId().toString(),
+                user.getEmail(),
+                user.getFullName(),
+                user.getPictureUrl()
+        );
     }
 }

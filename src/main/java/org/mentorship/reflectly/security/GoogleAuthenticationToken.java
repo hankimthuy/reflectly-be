@@ -20,7 +20,7 @@ public class GoogleAuthenticationToken extends UsernamePasswordAuthenticationTok
     private boolean authenticated;
 
     public GoogleAuthenticationToken(UserEntity user, String googleIdToken) {
-        super(user, null, Collections.emptyList());
+        super(user, googleIdToken, Collections.emptyList());
         this.user = user;
         this.googleIdToken = googleIdToken;
         this.authenticated = true;
