@@ -8,12 +8,4 @@ public record UserProfileResponseDto(
     @JsonProperty("fullName") String fullName,
     @JsonProperty("pictureUrl") String pictureUrl
 ) {
-    public static UserProfileResponseDto of(String id, String email, String fullName, String pictureUrl) {
-        return new UserProfileResponseDto(
-            id != null ? id : "",
-            email != null ? email : "",
-            fullName != null ? fullName : "",
-            pictureUrl != null ? pictureUrl : ""
-        );
-    }
 }

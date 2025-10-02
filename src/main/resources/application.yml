@@ -1,17 +1,4 @@
-server:
-  port: 8080
-  servlet:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
-
 spring:
-  http:
-    encoding:
-      charset: UTF-8
-      enabled: true
-      force: true
   datasource:
     url: ${DB_URL:jdbc:postgresql://ep-patient-meadow-a1sqfz0o-pooler.ap-southeast-1.aws.neon.tech/neondb?user=neondb_owner&password=npg_P13fvARrJxiF&sslmode=require&channelBinding=require}
     username: ${DB_USERNAME:neondb_owner}
@@ -27,12 +14,3 @@ spring:
       resource server:
         jwt:
           issuer-uri: https://accounts.google.com
-
-# Swagger/OpenAPI Configuration
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-  show-actuator: true
