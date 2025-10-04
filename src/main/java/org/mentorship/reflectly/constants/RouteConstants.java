@@ -30,11 +30,4 @@ public final class RouteConstants {
         "/api/public/**"
     };
     
-    // ==================== API ROUTES (authenticated) ====================
-    
-    public static final String[] API_ROUTES = {
-        "/api/users/**",
-        "/api/journal/**",
-        "/api/admin/**"
-    };
 }
