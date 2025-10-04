@@ -29,22 +29,16 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(this::configureAuthorization)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(RouteConstants.PUBLIC_ROUTES)
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer -> configurer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(googleAuthenticationConverter)));
 
         return http.build();
     }
 
-    /**
-     * Cấu hình authorization rules cho các endpoints
-     */
-    private void configureAuthorization(
-            org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
-        authorize.requestMatchers(RouteConstants.PUBLIC_ROUTES)
-                .permitAll()
-                .anyRequest().authenticated();
-    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
