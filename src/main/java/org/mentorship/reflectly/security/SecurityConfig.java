@@ -1,6 +1,7 @@
 package org.mentorship.reflectly.security;
 
 import lombok.RequiredArgsConstructor;
+import org.mentorship.reflectly.constants.RouteConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -40,59 +41,17 @@ public class SecurityConfig {
      */
     private void configureAuthorization(
             org.springframework.security.config.annotation.web.configurers.AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry authorize) {
-        
-        authorize
-                .requestMatchers(getEndpoints(EndpointType.SWAGGER)).permitAll()
-                .requestMatchers(getEndpoints(EndpointType.MONITORING)).permitAll()
-                .requestMatchers(getEndpoints(EndpointType.STATIC_RESOURCES)).permitAll()
-                .requestMatchers(getEndpoints(EndpointType.PUBLIC_API)).permitAll()
-                .requestMatchers(getEndpoints(EndpointType.USER_API)).authenticated()
-                .requestMatchers(getEndpoints(EndpointType.JOURNAL_API)).authenticated()
-                .requestMatchers(getEndpoints(EndpointType.ADMIN_API)).hasRole("ADMIN")
+        authorize.requestMatchers(RouteConstants.PUBLIC_ROUTES)
+                .permitAll()
                 .anyRequest().authenticated();
-    }
-
-    private String[] getEndpoints(EndpointType type) {
-        return switch (type) {
-            case SWAGGER -> new String[]{
-                    "/swagger-ui/**", 
-                    "/v3/api-docs/**", 
-                    "/swagger-ui.html"
-            };
-            case MONITORING -> new String[]{
-                    "/actuator/health", 
-                    "/actuator/info"
-            };
-            case STATIC_RESOURCES -> new String[]{
-                    "/",
-                    "/assets/**",
-                    "/static/**",
-                    "/*.html",
-                    "/*.js",
-                    "/*.css",
-                    "/*.svg"
-            };
-            case PUBLIC_API -> new String[]{
-                    "/api/public/**"
-            };
-            case USER_API -> new String[]{
-                    "/api/users/**"
-            };
-            case JOURNAL_API -> new String[]{
-                    "/api/journal/**"
-            };
-            case ADMIN_API -> new String[]{
-                    "/api/admin/**"
-            };
-        };
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-            "http://localhost:5173", // Vite dev server
-            "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net" // Production
+                "http://localhost:5173", // Vite dev server
+                "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net" // Production
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));

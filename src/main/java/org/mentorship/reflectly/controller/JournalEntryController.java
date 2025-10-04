@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.constants.ApiResponseCodes;
 import org.mentorship.reflectly.model.JournalEntryEntity;
 import org.mentorship.reflectly.service.JournalEntryService;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -32,6 +33,7 @@ public class JournalEntryController {
         @ApiResponse(responseCode = ApiResponseCodes.SUCCESS, description = ApiResponseCodes.JOURNAL_ENTRIES_RETRIEVED),
         @ApiResponse(responseCode = ApiResponseCodes.UNAUTHORIZED, description = ApiResponseCodes.UNAUTHORIZED_MESSAGE)
     })
+    @PreAuthorize("hasRole('USER')")
     @SecurityRequirement(name = "Bearer Authentication")
     @GetMapping
     public List<JournalEntryEntity> getAllJournalEntities() {
