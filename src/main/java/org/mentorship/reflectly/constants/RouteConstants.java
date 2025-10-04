@@ -1,9 +1,5 @@
 package org.mentorship.reflectly.constants;
 
-/**
- * Constants cho routing và security configuration
- * Simplified grouping cho tất cả route patterns
- */
 public final class RouteConstants {
     
     // Private constructor to prevent instantiation
