@@ -1,6 +1,7 @@
 package org.mentorship.reflectly.security;
 
 import lombok.RequiredArgsConstructor;
+import org.mentorship.reflectly.constants.RouteConstants;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,23 +30,23 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .requestMatchers(RouteConstants.PUBLIC_ROUTES)
+                        .permitAll()
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer -> configurer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(googleAuthenticationConverter)));
 
         return http.build();
     }
 
-    /**
-     * Bean cấu hình CORS.
-     * Cho phép các request từ frontend development server (localhost:5173).
-     */
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173", // Vite dev server
+                "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net" // Production
+        ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true);
