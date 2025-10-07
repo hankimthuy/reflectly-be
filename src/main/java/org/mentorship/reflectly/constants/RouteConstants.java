@@ -7,21 +7,18 @@ public final class RouteConstants {
         throw new UnsupportedOperationException("Utility class");
     }
     
-    // ==================== SPA ROUTES ====================
-    
-    public static final String ROOT = "/";
-    
-    public static final String SPA_CATCH_ALL = "/{path:^(?!api|assets|static|swagger-ui|v3|actuator).*$}/**";
-    
     // ==================== PUBLIC ROUTES (permitAll) ====================
     
     public static final String[] PUBLIC_ROUTES = {
+            "/", "/**",
         // Documentation
         "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html",
         // Monitoring
         "/actuator/health", "/actuator/info",
-        // Static resources
-        "/", "/assets/**", "/static/**", "/*.html", "/*.js", "/*.css", "/*.svg",
+        // Static resources - handled by WebMvcConfig
+        "/assets/**", "/static/**", "/*.html", "/*.js", "/*.css", "/*.svg", "/*.ico",
+        // SPA routes - handled by WebMvcConfig
+         "/login", "/profile", "/dashboard", "/journal",
         // Public API
         "/api/public/**"
     };
