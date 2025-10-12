@@ -1,9 +1,13 @@
 package org.mentorship.reflectly.config;
 
 import org.springframework.context.annotation.Configuration;
-import org.springframework.lang.NonNull;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.resource.PathResourceResolver;
+
+import java.io.IOException;
 
 /**
  * Base WebMvcConfigurer configuration class for common web settings
@@ -14,22 +18,17 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    /**
-     * Configure CORS (Cross-Origin Resource Sharing) settings
-     * This method defines which origins, methods, and headers are allowed for cross-origin requests
-     * 
-     * @param registry CORS registry for configuration
-     */
     @Override
-    public void addCorsMappings(@NonNull CorsRegistry registry) {
-        registry.addMapping("/**")
-                .allowedOrigins(
-                        "http://localhost:5173", // Vite development server
-                        "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net" // Production URL
-                )
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "Cache-Control")
-                .allowCredentials(true)
-                .maxAge(3600); // Cache preflight response for 1 hour
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/**")
+                .addResourceLocations("classpath:/static/")
+                .resourceChain(true)
+                .addResolver(new PathResourceResolver() {
+                    @Override
+                    protected Resource getResource(String resourcePath, Resource location) throws IOException {
+                        Resource resource = location.createRelative(resourcePath);
+                        return resource.exists() && resource.isReadable() ? resource : new ClassPathResource("/static/index.html");
+                    }
+                });
     }
 }

@@ -30,7 +30,7 @@ public class JournalEntryEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
-    @Setter(AccessLevel.PACKAGE) // Chỉ cho phép UserEntity set trường này qua addJournalEntry()
+    @Setter(AccessLevel.PACKAGE)
     private UserEntity user;
 
     @Column(name = "entry_date", nullable = false)
