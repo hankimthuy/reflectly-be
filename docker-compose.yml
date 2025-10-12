@@ -1,0 +1,29 @@
+version: '3.8'
+
+# This file defines the services for your application.
+services:
+  postgres:
+    # Use the same image as in your original command.
+    image: postgres:13
+
+    # Give the container a custom name for easy identification.
+    container_name: reflectly-postgres
+
+    # Map the container port to the host port.
+    ports:
+      - "5432:5432"
+
+    # Set environment variables for the PostgreSQL database.
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: reflectly
+
+    # Use a named volume to persist the database data. This prevents data loss
+    # when the container is stopped or removed.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+# Define the named volumes used by the services.
+volumes:
+  postgres_data:
