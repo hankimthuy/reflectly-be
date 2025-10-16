@@ -5,10 +5,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * Represents a User entity following Rich Domain Model principles.
@@ -34,13 +31,6 @@ public class UserEntity {
     @Column(name = "picture_url", nullable = false)
     private String pictureUrl;
 
-    @OneToMany(
-            mappedBy = "user",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
-    )
-    private Set<JournalEntryEntity> journalEntries = new HashSet<>();
 
     // --- Constructor ---
 
@@ -61,32 +51,6 @@ public class UserEntity {
         this.fullName = newFullName;
         this.pictureUrl = newPictureUrl;
         // Add any validation logic here if needed.
-    }
-
-    /**
-     * Safely adds a new journal entry to this user, maintaining bidirectional consistency.
-     * @param entry The journal entry to add.
-     */
-    public void addJournalEntry(JournalEntryEntity entry) {
-        journalEntries.add(entry);
-        entry.setUser(this); // Maintain consistency on the other side
-    }
-
-    /**
-     * Safely removes a journal entry from this user, maintaining bidirectional consistency.
-     * @param entry The journal entry to remove.
-     */
-    public void removeJournalEntry(JournalEntryEntity entry) {
-        journalEntries.remove(entry);
-        entry.setUser(null); // Maintain consistency on the other side
-    }
-
-    /**
-     * Provides a read-only view of the journal entries.
-     * Prevents external modification of the underlying collection.
-     */
-    public Set<JournalEntryEntity> getJournalEntries() {
-        return Collections.unmodifiableSet(journalEntries);
     }
 
     // --- equals() and hashCode() based on business key ---

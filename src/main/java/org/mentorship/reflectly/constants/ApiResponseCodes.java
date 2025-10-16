@@ -22,4 +22,21 @@ public class ApiResponseCodes {
     // Journal specific messages
     public static final String JOURNAL_ENTRIES_RETRIEVED = "Journal entries retrieved successfully";
 
+    // Entry specific codes
+    public static final String ENTRY_NOT_FOUND = "404";
+    public static final String ENTRY_FORBIDDEN = "403";
+    public static final String VALIDATION_ERROR = "400";
+    public static final String INTERNAL_SERVER_ERROR = "500";
+
+    // Entry specific messages
+    public static final String ENTRIES_RETRIEVED = "Entries retrieved successfully";
+    public static final String ENTRY_RETRIEVED = "Entry retrieved successfully";
+    public static final String ENTRY_CREATED = "Entry created successfully";
+    public static final String ENTRY_UPDATED = "Entry updated successfully";
+    public static final String ENTRY_DELETED = "Entry deleted successfully";
+    public static final String ENTRY_NOT_FOUND_MESSAGE = "Entry not found";
+    public static final String ENTRY_FORBIDDEN_MESSAGE = "Access denied - Entry does not belong to user";
+    public static final String VALIDATION_ERROR_MESSAGE = "Validation failed";
+    public static final String INTERNAL_SERVER_ERROR_MESSAGE = "Internal server error occurred";
+
 }
