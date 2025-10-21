@@ -1,23 +1,31 @@
 package org.mentorship.reflectly.controller;
 
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.mentorship.reflectly.DTO.ApiResponseDto;
 import org.mentorship.reflectly.DTO.EntryRequestDto;
 import org.mentorship.reflectly.DTO.EntryResponseDto;
+import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.EntryService;
 import org.mentorship.reflectly.util.HttpStatusUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.mentorship.reflectly.security.GoogleAuthenticationToken;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 /**
  * REST Controller for managing entries (journal entries).
@@ -26,8 +34,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/entries")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
-@Tag(name = "Entries", description = "Entry management APIs")
 public class EntryController {
 
     private final EntryService entryService;
@@ -112,8 +118,9 @@ public class EntryController {
     public ResponseEntity<ApiResponseDto<EntryResponseDto>> createEntry(
             @Valid @RequestBody EntryRequestDto requestDto,
             GoogleAuthenticationToken authentication) {
-        
+    
         String userId = getUserIdFromAuthentication(authentication);
+     
         ApiResponseDto<EntryResponseDto> response = entryService.createEntry(userId, requestDto);
         
         if (!response.isSuccess()) {
