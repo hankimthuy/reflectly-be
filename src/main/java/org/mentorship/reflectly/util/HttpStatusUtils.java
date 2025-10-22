@@ -26,26 +26,6 @@ public class HttpStatusUtils {
     }
 
     /**
-     * Check if an error code represents a client error (4xx).
-     * 
-     * @param errorCode The error code string
-     * @return true if it's a client error
-     */
-    public static boolean isClientError(String errorCode) {
-        return errorCode != null && errorCode.startsWith("4");
-    }
-
-    /**
-     * Check if an error code represents a server error (5xx).
-     * 
-     * @param errorCode The error code string
-     * @return true if it's a server error
-     */
-    public static boolean isServerError(String errorCode) {
-        return errorCode != null && errorCode.startsWith("5");
-    }
-
-    /**
      * Get a default HTTP status for unknown error codes.
      * 
      * @return HttpStatus.INTERNAL_SERVER_ERROR
