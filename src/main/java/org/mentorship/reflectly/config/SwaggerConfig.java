@@ -42,22 +42,6 @@ public class SwaggerConfig {
                 .type(SecurityScheme.Type.HTTP)
                 .bearerFormat("JWT")
                 .scheme("bearer")
-                .description("""
-                    Enter your Google ID Token here.
-                    
-                    How to get Google ID Token:
-                    1. Go to https://developers.google.com/oauthplayground/
-                    2. Select 'Google OAuth2 API v2' 
-                    3. Select scopes: 'openid email profile'
-                    4. Click 'Authorize APIs'
-                    5. Login with your Google account
-                    6. Copy the 'id_token' value
-                    7. Paste it here (without 'Bearer ' prefix)
-                    
-                    Or use Google Identity Services in your frontend:
-                    - Load: https://accounts.google.com/gsi/client
-                    - Initialize with your client_id
-                    - Get token from callback response
-                    """);
+                .description("");
     }
 }

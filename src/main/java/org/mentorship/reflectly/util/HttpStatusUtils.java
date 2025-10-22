@@ -21,7 +21,6 @@ public class HttpStatusUtils {
             case "401" -> HttpStatus.UNAUTHORIZED;
             case "403" -> HttpStatus.FORBIDDEN;
             case "404" -> HttpStatus.NOT_FOUND;
-            case "500" -> HttpStatus.INTERNAL_SERVER_ERROR;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
     }

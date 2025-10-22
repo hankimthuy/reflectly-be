@@ -9,10 +9,6 @@ import lombok.AllArgsConstructor;
 
 import java.util.List;
 
-/**
- * DTO for creating and updating entries.
- * Contains validation annotations for input validation.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
