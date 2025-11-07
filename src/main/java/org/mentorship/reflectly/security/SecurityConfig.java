@@ -5,6 +5,7 @@ import org.mentorship.reflectly.constants.RouteConstants;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -30,6 +31,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS at security layer
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
+                        // Allow OPTIONS requests for CORS preflight on all paths
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Allow public routes (Swagger, static resources, etc.)
                         .requestMatchers(RouteConstants.PUBLIC_ROUTES).permitAll()
                         // All other requests require authentication

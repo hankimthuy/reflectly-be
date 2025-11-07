@@ -8,10 +8,6 @@ import lombok.Builder;
 import java.time.LocalDateTime;
 import java.util.List;
 
-/**
- * DTO for returning entry data in API responses.
- * Contains all entry information including timestamps.
- */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor

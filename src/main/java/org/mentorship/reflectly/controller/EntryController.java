@@ -95,7 +95,8 @@ public class EntryController {
         ApiResponseDto<EntryResponseDto> response = entryService.getEntryById(userId, id);
         
         if (!response.isSuccess()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            HttpStatus status = HttpStatusUtils.getHttpStatusFromErrorCode(response.getError().getCode());
+            return ResponseEntity.status(status).body(response);
         }
         
         return ResponseEntity.ok(response);

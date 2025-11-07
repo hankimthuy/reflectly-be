@@ -11,7 +11,7 @@ public final class RouteConstants {
 
     public static final String[] PUBLIC_ROUTES = {
             // Root path for SPA
-            "/", "OPTIONS", "/api/users/profile",
+            "/", "/api/users/profile",
             // Documentation
             "/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html",
             // Monitoring

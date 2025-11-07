@@ -78,44 +78,17 @@ public class EntryEntity {
     public void updateDetails(String newTitle, String newReflection, List<String> newEmotions, List<String> newActivities) {
         this.title = Objects.requireNonNull(newTitle, "Title cannot be null");
         this.reflection = Objects.requireNonNull(newReflection, "Reflection cannot be null");
-        this.emotions = newEmotions != null ? new ArrayList<>(newEmotions) : new ArrayList<>();
-        this.activities = newActivities != null ? new ArrayList<>(newActivities) : new ArrayList<>();
-    }
-
-    /**
-     * Adds an emotion to the entry.
-     * @param emotion The emotion to add.
-     */
-    public void addEmotion(String emotion) {
-        if (emotion != null && !emotion.trim().isEmpty() && !this.emotions.contains(emotion)) {
-            this.emotions.add(emotion);
+        
+        // Clear and repopulate to maintain JPA's persistent collection reference
+        this.emotions.clear();
+        if (newEmotions != null) {
+            this.emotions.addAll(newEmotions);
         }
-    }
-
-    /**
-     * Removes an emotion from the entry.
-     * @param emotion The emotion to remove.
-     */
-    public void removeEmotion(String emotion) {
-        this.emotions.remove(emotion);
-    }
-
-    /**
-     * Adds an activity to the entry.
-     * @param activity The activity to add.
-     */
-    public void addActivity(String activity) {
-        if (activity != null && !activity.trim().isEmpty() && !this.activities.contains(activity)) {
-            this.activities.add(activity);
+        
+        this.activities.clear();
+        if (newActivities != null) {
+            this.activities.addAll(newActivities);
         }
-    }
-
-    /**
-     * Removes an activity from the entry.
-     * @param activity The activity to remove.
-     */
-    public void removeActivity(String activity) {
-        this.activities.remove(activity);
     }
 
     /**
