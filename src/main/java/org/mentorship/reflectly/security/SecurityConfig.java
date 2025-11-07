@@ -4,9 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.constants.RouteConstants;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -23,9 +21,6 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    @Value("${server.port:8080}")
-    private String serverPort;
-
     private final GoogleAuthenticationConverter googleAuthenticationConverter;
 
     @Bean
@@ -35,8 +30,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS at security layer
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Allow preflight requests (OPTIONS) for all endpoints
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Allow public routes (Swagger, static resources, etc.)
                         .requestMatchers(RouteConstants.PUBLIC_ROUTES).permitAll()
                         // All other requests require authentication
@@ -57,8 +50,7 @@ public class SecurityConfig {
 
         // Allow specific origins
         configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:5173",
-                "http://localhost:" + serverPort, // Backend server (dynamic port)
+                "http://localhost:*",
                 "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net"
         ));
 

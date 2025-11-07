@@ -118,6 +118,7 @@ public class EntryService {
             }
 
             String entryId = UUID.randomUUID().toString();
+            
             EntryEntity entry = new EntryEntity(
                     entryId,
                     userId,
@@ -126,8 +127,9 @@ public class EntryService {
                     requestDto.getEmotions(),
                     requestDto.getActivities()
             );
-
+            
             EntryEntity savedEntry = entryRepository.save(entry);
+            
             return ApiResponseDto.success(convertToResponseDto(savedEntry), ApiResponseCodes.ENTRY_CREATED);
         } catch (Exception e) {
             return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 

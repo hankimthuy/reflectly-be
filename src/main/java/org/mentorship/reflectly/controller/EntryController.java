@@ -191,9 +191,6 @@ public class EntryController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * Extract user ID from GoogleAuthenticationToken.
-     */
     private String getUserIdFromAuthentication(GoogleAuthenticationToken authentication) {
         if (authentication != null && authentication.getUser() != null) {
             // Extract user ID from the UserEntity in the authentication token
