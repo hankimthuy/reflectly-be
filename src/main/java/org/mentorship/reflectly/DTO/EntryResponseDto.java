@@ -1,4 +1,4 @@
-package org.mentorship.reflectly.DTO;
+package org.mentorship.reflectly.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -2,7 +2,8 @@ package org.mentorship.reflectly.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import lombok.RequiredArgsConstructor;
-import org.mentorship.reflectly.DTO.UserProfileResponseDto;
+
+import org.mentorship.reflectly.dto.UserProfileResponseDto;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.repository.UserRepository;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;

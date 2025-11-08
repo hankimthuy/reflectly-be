@@ -1,4 +1,4 @@
-package org.mentorship.reflectly.DTO;
+package org.mentorship.reflectly.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

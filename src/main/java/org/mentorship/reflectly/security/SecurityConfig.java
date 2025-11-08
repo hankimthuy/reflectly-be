@@ -31,8 +31,6 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS at security layer
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Allow OPTIONS requests for CORS preflight on all paths
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Allow public routes (Swagger, static resources, etc.)
                         .requestMatchers(RouteConstants.PUBLIC_ROUTES).permitAll()
                         // All other requests require authentication
@@ -43,10 +41,6 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * CORS configuration for Spring Security layer.
-     * This works together with WebMvcConfig CORS settings.
-     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();

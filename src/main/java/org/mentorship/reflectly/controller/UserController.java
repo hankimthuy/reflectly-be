@@ -5,8 +5,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.mentorship.reflectly.DTO.UserProfileResponseDto;
-import org.mentorship.reflectly.constants.ApiResponseCodes;
+
+import org.mentorship.reflectly.constants.ApiConstants;
+import org.mentorship.reflectly.dto.UserProfileResponseDto;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,8 @@ public class UserController {
         description = "Get authenticated user's profile information"
     )
     @ApiResponses(value = {
-        @ApiResponse(responseCode = ApiResponseCodes.SUCCESS, description = ApiResponseCodes.USER_PROFILE_RETRIEVED),
-        @ApiResponse(responseCode = ApiResponseCodes.UNAUTHORIZED, description = ApiResponseCodes.INVALID_GOOGLE_TOKEN)
+        @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "User profile retrieved successfully"),
+        @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or expired Google ID token")
     })
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponseDto> getUserProfile(GoogleAuthenticationToken authentication) {

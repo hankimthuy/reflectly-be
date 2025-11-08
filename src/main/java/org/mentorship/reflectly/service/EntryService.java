@@ -1,10 +1,11 @@
 package org.mentorship.reflectly.service;
 
 import lombok.RequiredArgsConstructor;
-import org.mentorship.reflectly.DTO.ApiResponseDto;
-import org.mentorship.reflectly.DTO.EntryRequestDto;
-import org.mentorship.reflectly.DTO.EntryResponseDto;
-import org.mentorship.reflectly.constants.ApiResponseCodes;
+
+import org.mentorship.reflectly.dto.EntryRequestDto;
+import org.mentorship.reflectly.dto.EntryResponseDto;
+import org.mentorship.reflectly.exception.NotFoundException;
+import org.mentorship.reflectly.exception.ValidationException;
 import org.mentorship.reflectly.model.EntryEntity;
 import org.mentorship.reflectly.repository.EntryRepository;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,170 +28,98 @@ public class EntryService {
 
     private final EntryRepository entryRepository;
 
-    /**
-     * Get all entries for a specific user.
-     */
     @Transactional(readOnly = true)
-    public ApiResponseDto<List<EntryResponseDto>> getAllEntries(String userId) {
-        try {
-            List<EntryEntity> entries = entryRepository.findByUserIdOrderByCreatedAtDesc(userId);
-            List<EntryResponseDto> responseDtos = entries.stream()
-                    .map(this::convertToResponseDto)
-                    .collect(Collectors.toList());
-            
-            return ApiResponseDto.success(responseDtos, ApiResponseCodes.ENTRIES_RETRIEVED);
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
-        }
+    public List<EntryResponseDto> getAllEntries(String userId) {
+        List<EntryEntity> entries = entryRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return entries.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Get entries by date range for a specific user.
-     */
     @Transactional(readOnly = true)
-    public ApiResponseDto<List<EntryResponseDto>> getEntriesByDateRange(String userId, String startDate, String endDate) {
+    public List<EntryResponseDto> getEntriesByDateRange(String userId, String startDate, String endDate) {
         try {
             LocalDateTime start = parseDateTime(startDate);
             LocalDateTime end = parseDateTime(endDate);
             
             List<EntryEntity> entries = entryRepository.findByUserIdAndCreatedAtBetween(userId, start, end);
-            List<EntryResponseDto> responseDtos = entries.stream()
+            return entries.stream()
                     .map(this::convertToResponseDto)
                     .collect(Collectors.toList());
-            
-            return ApiResponseDto.success(responseDtos, ApiResponseCodes.ENTRIES_RETRIEVED);
         } catch (DateTimeParseException e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.VALIDATION_ERROR, 
-                    "Invalid date format. Use ISO format (yyyy-MM-ddTHH:mm:ss)", null));
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
+            throw new ValidationException("Invalid date format. Use ISO format (yyyy-MM-ddTHH:mm:ss)");
         }
     }
 
-    /**
-     * Get entries by emotion for a specific user.
-     */
     @Transactional(readOnly = true)
-    public ApiResponseDto<List<EntryResponseDto>> getEntriesByEmotion(String userId, String emotion) {
-        try {
-            List<EntryEntity> entries = entryRepository.findByUserIdAndEmotionsContaining(userId, emotion);
-            List<EntryResponseDto> responseDtos = entries.stream()
-                    .map(this::convertToResponseDto)
-                    .collect(Collectors.toList());
-            
-            return ApiResponseDto.success(responseDtos, ApiResponseCodes.ENTRIES_RETRIEVED);
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
-        }
+    public List<EntryResponseDto> getEntriesByEmotion(String userId, String emotion) {
+        List<EntryEntity> entries = entryRepository.findByUserIdAndEmotionsContaining(userId, emotion);
+        return entries.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
     }
 
-    /**
-     * Get a specific entry by ID for a specific user.
-     */
     @Transactional(readOnly = true)
-    public ApiResponseDto<EntryResponseDto> getEntryById(String userId, String entryId) {
-        try {
-            Optional<EntryEntity> entry = entryRepository.findByIdAndUserId(entryId, userId);
-            if (entry.isEmpty()) {
-                return ApiResponseDto.error(createErrorDto(ApiResponseCodes.ENTRY_NOT_FOUND, 
-                        ApiResponseCodes.ENTRY_NOT_FOUND_MESSAGE, null));
-            }
-            
-            return ApiResponseDto.success(convertToResponseDto(entry.get()), ApiResponseCodes.ENTRY_RETRIEVED);
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
-        }
+    public EntryResponseDto getEntryById(String userId, String entryId) {
+        EntryEntity entry = entryRepository.findByIdAndUserId(entryId, userId)
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
+        
+        return convertToResponseDto(entry);
     }
 
-    /**
-     * Create a new entry for a specific user.
-     */
-    public ApiResponseDto<EntryResponseDto> createEntry(String userId, EntryRequestDto requestDto) {
-        try {
-            // Validate emotions list
-            if (requestDto.getEmotions() == null || requestDto.getEmotions().isEmpty()) {
-                return ApiResponseDto.error(createErrorDto(ApiResponseCodes.VALIDATION_ERROR, 
-                        "At least one emotion is required", null));
-            }
-
-            String entryId = UUID.randomUUID().toString();
-            
-            EntryEntity entry = new EntryEntity(
-                    entryId,
-                    userId,
-                    requestDto.getTitle(),
-                    requestDto.getReflection(),
-                    requestDto.getEmotions(),
-                    requestDto.getActivities()
-            );
-            
-            EntryEntity savedEntry = entryRepository.save(entry);
-            
-            return ApiResponseDto.success(convertToResponseDto(savedEntry), ApiResponseCodes.ENTRY_CREATED);
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
+    public EntryResponseDto createEntry(String userId, EntryRequestDto requestDto) {
+        if (requestDto.getEmotions() == null || requestDto.getEmotions().isEmpty()) {
+            throw new ValidationException("At least one emotion is required");
         }
+
+        String entryId = UUID.randomUUID().toString();
+        
+        EntryEntity entry = new EntryEntity(
+                entryId,
+                userId,
+                requestDto.getTitle(),
+                requestDto.getReflection(),
+                requestDto.getEmotions(),
+                requestDto.getActivities()
+        );
+        
+        EntryEntity savedEntry = entryRepository.save(entry);
+        return convertToResponseDto(savedEntry);
     }
 
-    /**
-     * Update an existing entry for a specific user.
-     */
-    public ApiResponseDto<EntryResponseDto> updateEntry(String userId, String entryId, EntryRequestDto requestDto) {
-        try {
-            Optional<EntryEntity> existingEntry = entryRepository.findByIdAndUserId(entryId, userId);
-            if (existingEntry.isEmpty()) {
-                return ApiResponseDto.error(createErrorDto(ApiResponseCodes.ENTRY_NOT_FOUND, 
-                        ApiResponseCodes.ENTRY_NOT_FOUND_MESSAGE, null));
-            }
+    public EntryResponseDto updateEntry(String userId, String entryId, EntryRequestDto requestDto) {
+        EntryEntity entry = entryRepository.findByIdAndUserId(entryId, userId)
+                .orElseThrow(() -> new NotFoundException("Entry not found"));
 
-            // Validate emotions list
-            if (requestDto.getEmotions() == null || requestDto.getEmotions().isEmpty()) {
-                return ApiResponseDto.error(createErrorDto(ApiResponseCodes.VALIDATION_ERROR, 
-                        "At least one emotion is required", null));
-            }
-
-            EntryEntity entry = existingEntry.get();
-            entry.updateDetails(
-                    requestDto.getTitle(),
-                    requestDto.getReflection(),
-                    requestDto.getEmotions(),
-                    requestDto.getActivities()
-            );
-
-            EntryEntity savedEntry = entryRepository.save(entry);
-            return ApiResponseDto.success(convertToResponseDto(savedEntry), ApiResponseCodes.ENTRY_UPDATED);
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
+        if (requestDto.getEmotions() == null || requestDto.getEmotions().isEmpty()) {
+            throw new ValidationException("At least one emotion is required");
         }
+
+        entry.setTitle(Objects.requireNonNull(requestDto.getTitle(), "Title cannot be null"));
+        entry.setReflection(Objects.requireNonNull(requestDto.getReflection(), "Reflection cannot be null"));
+        
+        entry.getEmotions().clear();
+        if (requestDto.getEmotions() != null) {
+            entry.getEmotions().addAll(requestDto.getEmotions());
+        }
+        
+        entry.getActivities().clear();
+        if (requestDto.getActivities() != null) {
+            entry.getActivities().addAll(requestDto.getActivities());
+        }
+
+        EntryEntity savedEntry = entryRepository.save(entry);
+        return convertToResponseDto(savedEntry);
     }
 
-    /**
-     * Delete an entry for a specific user.
-     */
-    public ApiResponseDto<Void> deleteEntry(String userId, String entryId) {
-        try {
-            if (!entryRepository.existsByIdAndUserId(entryId, userId)) {
-                return ApiResponseDto.error(createErrorDto(ApiResponseCodes.ENTRY_NOT_FOUND, 
-                        ApiResponseCodes.ENTRY_NOT_FOUND_MESSAGE, null));
-            }
-
-            entryRepository.deleteById(entryId);
-            return ApiResponseDto.success(ApiResponseCodes.ENTRY_DELETED);
-        } catch (Exception e) {
-            return ApiResponseDto.error(createErrorDto(ApiResponseCodes.INTERNAL_SERVER_ERROR, 
-                    ApiResponseCodes.INTERNAL_SERVER_ERROR_MESSAGE, e.getMessage()));
+    public void deleteEntry(String userId, String entryId) {
+        if (!entryRepository.existsByIdAndUserId(entryId, userId)) {
+            throw new NotFoundException("Entry not found");
         }
+
+        entryRepository.deleteById(entryId);
     }
 
-    /**
-     * Convert EntryEntity to EntryResponseDto.
-     */
     private EntryResponseDto convertToResponseDto(EntryEntity entity) {
         return EntryResponseDto.builder()
                 .id(entity.getId())
@@ -204,22 +133,8 @@ public class EntryService {
                 .build();
     }
 
-    /**
-     * Parse date string to LocalDateTime.
-     */
     private LocalDateTime parseDateTime(String dateString) throws DateTimeParseException {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         return LocalDateTime.parse(dateString, formatter);
-    }
-
-    /**
-     * Create error DTO.
-     */
-    private ApiResponseDto.ErrorDto createErrorDto(String code, String message, Object details) {
-        return ApiResponseDto.ErrorDto.builder()
-                .code(code)
-                .message(message)
-                .details(details)
-                .build();
     }
 }

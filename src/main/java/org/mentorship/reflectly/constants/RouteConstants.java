@@ -7,8 +7,6 @@ public final class RouteConstants {
         throw new UnsupportedOperationException("Utility class");
     }
 
-    // ==================== PUBLIC ROUTES (permitAll) ====================
-
     public static final String[] PUBLIC_ROUTES = {
             // Root path for SPA
             "/", "/api/users/profile",

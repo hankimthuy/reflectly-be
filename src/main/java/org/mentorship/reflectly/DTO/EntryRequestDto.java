@@ -1,4 +1,4 @@
-package org.mentorship.reflectly.DTO;
+package org.mentorship.reflectly.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
