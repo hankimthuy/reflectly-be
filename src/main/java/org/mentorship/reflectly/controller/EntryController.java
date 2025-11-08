@@ -1,13 +1,11 @@
 package org.mentorship.reflectly.controller;
 
-import java.util.List;
-
 import org.mentorship.reflectly.constants.ApiConstants;
 import org.mentorship.reflectly.dto.EntryRequestDto;
 import org.mentorship.reflectly.dto.EntryResponseDto;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.EntryService;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,23 +37,25 @@ public class EntryController {
             @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
     })
     @GetMapping
-    public ResponseEntity<List<EntryResponseDto>> getAllEntries(
+    public ResponseEntity<Page<EntryResponseDto>> getAllEntries(
             GoogleAuthenticationToken authentication,
             @Parameter(description = "Start date for filtering (ISO format)") @RequestParam(required = false) String startDate,
             @Parameter(description = "End date for filtering (ISO format)") @RequestParam(required = false) String endDate,
-            @Parameter(description = "Emotion to filter by") @RequestParam(required = false) String emotion) {
+            @Parameter(description = "Emotion to filter by") @RequestParam(required = false) String emotion,
+            @Parameter(description = "Page number") @RequestParam(required = false, defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(required = false, defaultValue = "20") int pageSize) {
 
         String userId = getUserIdFromAuthentication(authentication);
 
         if (startDate != null && endDate != null) {
-            return ResponseEntity.ok(entryService.getEntriesByDateRange(userId, startDate, endDate));
+            return ResponseEntity.ok(entryService.getEntriesByDateRange(userId, startDate, endDate, page, pageSize));
         }
 
         if (emotion != null) {
-            return ResponseEntity.ok(entryService.getEntriesByEmotion(userId, emotion));
+            return ResponseEntity.ok(entryService.getEntriesByEmotion(userId, emotion, page, pageSize));
         }
 
-        return ResponseEntity.ok(entryService.getAllEntries(userId));
+        return ResponseEntity.ok(entryService.getAllEntries(userId, page, pageSize));
     }
 
     @Operation(summary = "Get entry by ID", description = "Get a specific entry by its ID for the current user")
@@ -87,7 +87,7 @@ public class EntryController {
 
         String userId = getUserIdFromAuthentication(authentication);
         EntryResponseDto entry = entryService.createEntry(userId, requestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(entry);
+        return ResponseEntity.ok(entry);
     }
 
     @Operation(summary = "Update entry", description = "Update an existing entry for the current user")

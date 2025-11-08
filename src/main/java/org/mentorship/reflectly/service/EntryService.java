@@ -8,6 +8,9 @@ import org.mentorship.reflectly.exception.NotFoundException;
 import org.mentorship.reflectly.exception.ValidationException;
 import org.mentorship.reflectly.model.EntryEntity;
 import org.mentorship.reflectly.repository.EntryRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -15,10 +18,8 @@ import org.springframework.validation.annotation.Validated;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,37 +27,36 @@ import java.util.stream.Collectors;
 @Validated
 public class EntryService {
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     private final EntryRepository entryRepository;
 
     @Transactional(readOnly = true)
-    public List<EntryResponseDto> getAllEntries(String userId) {
-        List<EntryEntity> entries = entryRepository.findByUserIdOrderByCreatedAtDesc(userId);
-        return entries.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
+    public Page<EntryResponseDto> getAllEntries(String userId, int page, int pageSize) {
+        Pageable pageable = createPageable(page, pageSize);
+        Page<EntryEntity> entryPage = entryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        return entryPage.map(this::convertToResponseDto);
     }
 
     @Transactional(readOnly = true)
-    public List<EntryResponseDto> getEntriesByDateRange(String userId, String startDate, String endDate) {
+    public Page<EntryResponseDto> getEntriesByDateRange(String userId, String startDate, String endDate, int page, int pageSize) {
         try {
             LocalDateTime start = parseDateTime(startDate);
             LocalDateTime end = parseDateTime(endDate);
             
-            List<EntryEntity> entries = entryRepository.findByUserIdAndCreatedAtBetween(userId, start, end);
-            return entries.stream()
-                    .map(this::convertToResponseDto)
-                    .collect(Collectors.toList());
+            Pageable pageable = createPageable(page, pageSize);
+            Page<EntryEntity> entryPage = entryRepository.findByUserIdAndCreatedAtBetween(userId, start, end, pageable);
+            return entryPage.map(this::convertToResponseDto);
         } catch (DateTimeParseException e) {
             throw new ValidationException("Invalid date format. Use ISO format (yyyy-MM-ddTHH:mm:ss)");
         }
     }
 
     @Transactional(readOnly = true)
-    public List<EntryResponseDto> getEntriesByEmotion(String userId, String emotion) {
-        List<EntryEntity> entries = entryRepository.findByUserIdAndEmotionsContaining(userId, emotion);
-        return entries.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
+    public Page<EntryResponseDto> getEntriesByEmotion(String userId, String emotion, int page, int pageSize) {
+        Pageable pageable = createPageable(page, pageSize);
+        Page<EntryEntity> entryPage = entryRepository.findByUserIdAndEmotionsContaining(userId, emotion, pageable);
+        return entryPage.map(this::convertToResponseDto);
     }
 
     @Transactional(readOnly = true)
@@ -118,6 +118,12 @@ public class EntryService {
         }
 
         entryRepository.deleteById(entryId);
+    }
+
+    private Pageable createPageable(int page, int pageSize) {
+        int validPage = Math.max(0, page);
+        int validPageSize = Math.min(Math.max(1, pageSize), MAX_PAGE_SIZE);
+        return PageRequest.of(validPage, validPageSize);
     }
 
     private EntryResponseDto convertToResponseDto(EntryEntity entity) {
