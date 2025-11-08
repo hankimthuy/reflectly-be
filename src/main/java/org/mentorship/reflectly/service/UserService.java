@@ -3,6 +3,7 @@ package org.mentorship.reflectly.service;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import lombok.RequiredArgsConstructor;
 
+import org.mentorship.reflectly.constants.ApiConstants;
 import org.mentorship.reflectly.dto.UserProfileResponseDto;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.repository.UserRepository;
@@ -57,6 +58,9 @@ public class UserService {
      * @return UserProfileResponseDto containing user information from database
      */
     public UserProfileResponseDto getUserProfile(GoogleAuthenticationToken authentication) {
+        if (authentication == null || authentication.getUser() == null) {
+            throw new RuntimeException(ApiConstants.USER_NOT_AUTHENTICATED);
+        }
         UserEntity user = authentication.getUser();
         return new UserProfileResponseDto(
                 user.getId().toString(),

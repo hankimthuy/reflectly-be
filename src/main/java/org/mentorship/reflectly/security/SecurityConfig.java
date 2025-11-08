@@ -5,7 +5,6 @@ import org.mentorship.reflectly.constants.RouteConstants;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -51,7 +50,7 @@ public class SecurityConfig {
                 "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net"
         ));
 
-        // Allow all HTTP methods
+        // Allow all HTTP methods (OPTIONS required for CORS preflight requests)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // Allow all headers
