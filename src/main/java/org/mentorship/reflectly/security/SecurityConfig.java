@@ -22,6 +22,8 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final GoogleAuthenticationConverter googleAuthenticationConverter;
+    private final CookieBearerTokenResolver cookieBearerTokenResolver;
+    private final CookieJwtDecoder cookieJwtDecoder;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -35,7 +37,10 @@ public class SecurityConfig {
                         // All other requests require authentication
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer -> configurer
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(googleAuthenticationConverter)));
+                        .bearerTokenResolver(cookieBearerTokenResolver) // Read token from cookie or Authorization header
+                        .jwt(jwt -> jwt
+                                .decoder(cookieJwtDecoder)
+                                .jwtAuthenticationConverter(googleAuthenticationConverter)));
 
         return http.build();
     }
