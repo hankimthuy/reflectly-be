@@ -59,10 +59,7 @@ public class EntryEntity {
     }
 
     public void setEmotions(List<String> emotions) {
-        this.emotions.clear();
-        if (emotions != null) {
-            this.emotions.addAll(emotions);
-        }
+        this.emotions = emotions != null ? new ArrayList<>(emotions) : new ArrayList<>();
     }
 
     @CreationTimestamp
