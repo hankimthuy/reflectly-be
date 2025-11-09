@@ -44,6 +44,11 @@ public class EntryService {
             LocalDateTime start = parseDateTime(startDate);
             LocalDateTime end = parseDateTime(endDate);
             
+            // Business rule: start date must be before or equal to end date
+            if (start.isAfter(end)) {
+                throw new ValidationException("startDate must be before or equal to endDate");
+            }
+            
             Pageable pageable = createPageable(page, pageSize);
             Page<EntryEntity> entryPage = entryRepository.findByUserIdAndCreatedAtBetween(userId, start, end, pageable);
             return entryPage.map(this::convertToResponseDto);

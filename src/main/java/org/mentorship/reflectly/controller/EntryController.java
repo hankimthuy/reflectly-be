@@ -3,6 +3,7 @@ package org.mentorship.reflectly.controller;
 import org.mentorship.reflectly.constants.ApiConstants;
 import org.mentorship.reflectly.dto.EntryRequestDto;
 import org.mentorship.reflectly.dto.EntryResponseDto;
+import org.mentorship.reflectly.exception.ValidationException;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.EntryService;
 import org.springframework.data.domain.Page;
@@ -31,9 +32,10 @@ public class EntryController {
 
     private final EntryService entryService;
 
-    @Operation(summary = "Get all entries", description = "Get all entries for the current user with optional filtering by date range or emotion")
+    @Operation(summary = "Get all entries", description = "Get all entries for the current user with optional filtering by date range or emotion. Note: Both startDate and endDate must be provided together for date range filtering.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Entries retrieved successfully"),
+            @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Validation error (e.g., only one date parameter provided)"),
             @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
     })
     @GetMapping
@@ -46,6 +48,11 @@ public class EntryController {
             @Parameter(description = "Page size") @RequestParam(required = false, defaultValue = "20") int pageSize) {
 
         String userId = getUserIdFromAuthentication(authentication);
+
+        // Validate date range parameters - both must be provided together
+        if ((startDate != null && endDate == null) || (startDate == null && endDate != null)) {
+            throw new ValidationException("Both startDate and endDate must be provided together for date range filtering");
+        }
 
         if (startDate != null && endDate != null) {
             return ResponseEntity.ok(entryService.getEntriesByDateRange(userId, startDate, endDate, page, pageSize));
