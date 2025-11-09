@@ -10,13 +10,14 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Represents an Entry entity for the new entries system.
  * This entity follows the requirements for the new entries API with UUID-based IDs,
- * JSON arrays for emotions and activities, and proper timestamp management.
+ * JSON arrays for emotions, and proper timestamp management.
  */
 @Entity
 @Table(name = "entries", indexes = {
@@ -47,10 +48,22 @@ public class EntryEntity {
     @Column(name = "emotion", length = 50)
     private List<String> emotions = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(name = "entry_activities", joinColumns = @JoinColumn(name = "entry_id"))
-    @Column(name = "activity", length = 100)
-    private List<String> activities = new ArrayList<>();
+    /**
+     * Returns an unmodifiable view of the emotions list.
+     * Attempts to modify the returned list will throw UnsupportedOperationException.
+     * 
+     * @return unmodifiable list of emotions
+     */
+    public List<String> getEmotions() {
+        return Collections.unmodifiableList(emotions);
+    }
+
+    public void setEmotions(List<String> emotions) {
+        this.emotions.clear();
+        if (emotions != null) {
+            this.emotions.addAll(emotions);
+        }
+    }
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -61,13 +74,12 @@ public class EntryEntity {
     private LocalDateTime updatedAt;
 
     // Constructor for creating new entries
-    public EntryEntity(String id, String userId, String title, String reflection, List<String> emotions, List<String> activities) {
+    public EntryEntity(String id, String userId, String title, String reflection, List<String> emotions) {
         this.id = Objects.requireNonNull(id, "ID cannot be null");
         this.userId = Objects.requireNonNull(userId, "User ID cannot be null");
         this.title = Objects.requireNonNull(title, "Title cannot be null");
         this.reflection = Objects.requireNonNull(reflection, "Reflection cannot be null");
         this.emotions = emotions != null ? new ArrayList<>(emotions) : new ArrayList<>();
-        this.activities = activities != null ? new ArrayList<>(activities) : new ArrayList<>();
     }
 
     @Override

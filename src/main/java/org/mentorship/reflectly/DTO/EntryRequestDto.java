@@ -24,6 +24,4 @@ public class EntryRequestDto {
 
     @NotEmpty(message = "At least one emotion is required")
     private List<String> emotions;
-
-    private List<String> activities;
 }

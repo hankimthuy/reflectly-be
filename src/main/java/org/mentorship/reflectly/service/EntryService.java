@@ -79,8 +79,7 @@ public class EntryService {
                 userId,
                 requestDto.getTitle(),
                 requestDto.getReflection(),
-                requestDto.getEmotions(),
-                requestDto.getActivities()
+                requestDto.getEmotions()
         );
         
         EntryEntity savedEntry = entryRepository.save(entry);
@@ -97,16 +96,7 @@ public class EntryService {
 
         entry.setTitle(Objects.requireNonNull(requestDto.getTitle(), "Title cannot be null"));
         entry.setReflection(Objects.requireNonNull(requestDto.getReflection(), "Reflection cannot be null"));
-        
-        entry.getEmotions().clear();
-        if (requestDto.getEmotions() != null) {
-            entry.getEmotions().addAll(requestDto.getEmotions());
-        }
-        
-        entry.getActivities().clear();
-        if (requestDto.getActivities() != null) {
-            entry.getActivities().addAll(requestDto.getActivities());
-        }
+        entry.setEmotions(requestDto.getEmotions());
 
         EntryEntity savedEntry = entryRepository.save(entry);
         return convertToResponseDto(savedEntry);
@@ -133,7 +123,6 @@ public class EntryService {
                 .title(entity.getTitle())
                 .reflection(entity.getReflection())
                 .emotions(entity.getEmotions())
-                .activities(entity.getActivities())
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

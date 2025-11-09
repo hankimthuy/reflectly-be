@@ -19,7 +19,6 @@ public class EntryResponseDto {
     private String title;
     private String reflection;
     private List<String> emotions;
-    private List<String> activities;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
