@@ -20,7 +20,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @param userId The user ID to search for.
      * @return List of entries for the user.
      */
-    List<EntryEntity> findByUserIdOrderByCreatedAtDesc(String userId);
+    List<EntryEntity> findByUserIdOrderByCreatedDateDesc(String userId);
 
     /**
      * Find all entries by user ID with pagination.
@@ -28,7 +28,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @param pageable Pagination information.
      * @return Page of entries for the user.
      */
-    Page<EntryEntity> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+    Page<EntryEntity> findByUserIdOrderByCreatedDateDesc(String userId, Pageable pageable);
 
     /**
      * Find an entry by ID and user ID (for security - users can only access their own entries).
@@ -45,7 +45,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @param endDate The end date (inclusive).
      * @return List of entries within the date range.
      */
-    @Query("SELECT e FROM EntryEntity e WHERE e.userId = :userId AND e.createdAt >= :startDate AND e.createdAt <= :endDate ORDER BY e.createdAt DESC")
+    @Query("SELECT e FROM EntryEntity e WHERE e.userId = :userId AND e.createdDate >= :startDate AND e.createdDate <= :endDate ORDER BY e.createdDate DESC")
     List<EntryEntity> findByUserIdAndCreatedAtBetween(
             @Param("userId") String userId,
             @Param("startDate") LocalDateTime startDate,
@@ -60,7 +60,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @param pageable Pagination information.
      * @return Page of entries within the date range.
      */
-    @Query("SELECT e FROM EntryEntity e WHERE e.userId = :userId AND e.createdAt >= :startDate AND e.createdAt <= :endDate ORDER BY e.createdAt DESC")
+    @Query("SELECT e FROM EntryEntity e WHERE e.userId = :userId AND e.createdDate >= :startDate AND e.createdDate <= :endDate ORDER BY e.createdDate DESC")
     Page<EntryEntity> findByUserIdAndCreatedAtBetween(
             @Param("userId") String userId,
             @Param("startDate") LocalDateTime startDate,
@@ -74,7 +74,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @param emotion The emotion to search for.
      * @return List of entries containing the specified emotion.
      */
-    @Query("SELECT e FROM EntryEntity e JOIN e.emotions em WHERE e.userId = :userId AND em = :emotion ORDER BY e.createdAt DESC")
+    @Query("SELECT e FROM EntryEntity e JOIN e.emotions em WHERE e.userId = :userId AND em = :emotion ORDER BY e.createdDate DESC")
     List<EntryEntity> findByUserIdAndEmotionsContaining(
             @Param("userId") String userId,
             @Param("emotion") String emotion
@@ -87,7 +87,7 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @param pageable Pagination information.
      * @return Page of entries containing the specified emotion.
      */
-    @Query("SELECT e FROM EntryEntity e JOIN e.emotions em WHERE e.userId = :userId AND em = :emotion ORDER BY e.createdAt DESC")
+    @Query("SELECT e FROM EntryEntity e JOIN e.emotions em WHERE e.userId = :userId AND em = :emotion ORDER BY e.createdDate DESC")
     Page<EntryEntity> findByUserIdAndEmotionsContaining(
             @Param("userId") String userId,
             @Param("emotion") String emotion,

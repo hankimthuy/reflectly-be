@@ -34,7 +34,7 @@ public class EntryService {
     @Transactional(readOnly = true)
     public Page<EntryResponseDto> getAllEntries(String userId, int page, int pageSize) {
         Pageable pageable = createPageable(page, pageSize);
-        Page<EntryEntity> entryPage = entryRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
+        Page<EntryEntity> entryPage = entryRepository.findByUserIdOrderByCreatedDateDesc(userId, pageable);
         return entryPage.map(this::convertToResponseDto);
     }
 
@@ -128,8 +128,8 @@ public class EntryService {
                 .title(entity.getTitle())
                 .reflection(entity.getReflection())
                 .emotions(entity.getEmotions())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(entity.getCreatedDate())
+                .updatedAt(entity.getLastModifiedDate())
                 .build();
     }
 
