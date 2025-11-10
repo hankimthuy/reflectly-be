@@ -2,7 +2,7 @@ package org.mentorship.reflectly.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-public record UserProfileResponseDto(
+public record UserProfileRecord(
     @JsonProperty("id") String id,
     @JsonProperty("email") String email,
     @JsonProperty("fullName") String fullName,
