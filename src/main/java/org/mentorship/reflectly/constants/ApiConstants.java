@@ -3,6 +3,7 @@ package org.mentorship.reflectly.constants;
 public class ApiConstants {
     
     public static final String SUCCESS = "200";
+    public static final String CREATED = "201";
     public static final String NO_CONTENT = "204";
     public static final String BAD_REQUEST = "400";
     public static final String UNAUTHORIZED = "401";

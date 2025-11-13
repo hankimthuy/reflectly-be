@@ -7,8 +7,12 @@ import org.mentorship.reflectly.exception.ValidationException;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.EntryService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.bind.annotation.DeleteMapping;
+
+import java.net.URI;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,25 +48,25 @@ public class EntryController {
             @Parameter(description = "Start date for filtering (ISO format)") @RequestParam(required = false) String startDate,
             @Parameter(description = "End date for filtering (ISO format)") @RequestParam(required = false) String endDate,
             @Parameter(description = "Emotion to filter by") @RequestParam(required = false) String emotion,
-            @Parameter(description = "Page number") @RequestParam(required = false, defaultValue = "0") int page,
-            @Parameter(description = "Page size") @RequestParam(required = false, defaultValue = "20") int pageSize) {
+            Pageable pageable) {
 
         String userId = getUserIdFromAuthentication(authentication);
 
         // Validate date range parameters - both must be provided together
         if ((startDate != null && endDate == null) || (startDate == null && endDate != null)) {
-            throw new ValidationException("Both startDate and endDate must be provided together for date range filtering");
+            throw new ValidationException(
+                    "Both startDate and endDate must be provided together for date range filtering");
         }
 
         if (startDate != null && endDate != null) {
-            return ResponseEntity.ok(entryService.getEntriesByDateRange(userId, startDate, endDate, page, pageSize));
+            return ResponseEntity.ok(entryService.getEntriesByDateRange(userId, startDate, endDate, pageable));
         }
 
         if (emotion != null) {
-            return ResponseEntity.ok(entryService.getEntriesByEmotion(userId, emotion, page, pageSize));
+            return ResponseEntity.ok(entryService.getEntriesByEmotion(userId, emotion, pageable));
         }
 
-        return ResponseEntity.ok(entryService.getAllEntries(userId, page, pageSize));
+        return ResponseEntity.ok(entryService.getAllEntries(userId, pageable));
     }
 
     @Operation(summary = "Get entry by ID", description = "Get a specific entry by its ID for the current user")
@@ -83,7 +87,7 @@ public class EntryController {
 
     @Operation(summary = "Create new entry", description = "Create a new entry for the current user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Entry created successfully"),
+            @ApiResponse(responseCode = ApiConstants.CREATED, description = "Entry created successfully"),
             @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Validation error"),
             @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
     })
@@ -94,7 +98,11 @@ public class EntryController {
 
         String userId = getUserIdFromAuthentication(authentication);
         EntryResponseDto entry = entryService.createEntry(userId, requestDto);
-        return ResponseEntity.ok(entry);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(entry.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(entry);
     }
 
     @Operation(summary = "Update entry", description = "Update an existing entry for the current user")
