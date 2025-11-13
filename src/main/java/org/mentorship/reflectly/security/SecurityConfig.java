@@ -3,12 +3,15 @@ package org.mentorship.reflectly.security;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.constants.RouteConstants;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -23,7 +26,9 @@ public class SecurityConfig {
 
     private final GoogleAuthenticationConverter googleAuthenticationConverter;
     private final CookieBearerTokenResolver cookieBearerTokenResolver;
-    private final CookieJwtDecoder cookieJwtDecoder;
+
+    @Value("${spring.security.oauth2.resource-server.jwt.issuer-uri}")
+    private String issuerUri;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,10 +44,16 @@ public class SecurityConfig {
                 .oauth2ResourceServer(configurer -> configurer
                         .bearerTokenResolver(cookieBearerTokenResolver) // Read token from cookie or Authorization header
                         .jwt(jwt -> jwt
-                                .decoder(cookieJwtDecoder)
+                                .decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(googleAuthenticationConverter)));
 
         return http.build();
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        // Required by Spring Security to parse and validate JWT tokens
+        return NimbusJwtDecoder.withIssuerLocation(issuerUri).build();
     }
 
     @Bean
