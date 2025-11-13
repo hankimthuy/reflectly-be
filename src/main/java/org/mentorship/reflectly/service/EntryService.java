@@ -2,7 +2,7 @@ package org.mentorship.reflectly.service;
 
 import lombok.RequiredArgsConstructor;
 
-import org.mentorship.reflectly.mapper.EntryMapper;
+import org.mentorship.reflectly.converter.EntryConverter;
 import org.mentorship.reflectly.dto.EntryRequestDto;
 import org.mentorship.reflectly.dto.EntryResponseDto;
 import org.mentorship.reflectly.exception.NotFoundException;
@@ -30,13 +30,13 @@ public class EntryService {
     private static final int MAX_PAGE_SIZE = 100;
 
     private final EntryRepository entryRepository;
-    private final EntryMapper entryMapper;
+    private final EntryConverter entryConverter;
 
     @Transactional(readOnly = true)
     public Page<EntryResponseDto> getAllEntries(String userId, Pageable pageable) {
-        Pageable validatedPageable = validatePageable(pageable);
-        Page<EntryEntity> entryPage = entryRepository.findByUserIdOrderByCreatedAtDesc(userId, validatedPageable);
-        return entryMapper.toResponseDtoPage(entryPage);
+        Pageable validatedPageable = validateAndCreatePageable(pageable);
+        Page<EntryEntity> entryPage = entryRepository.findByUserIdOrderByCreatedDateDesc(userId, validatedPageable);
+        return entryConverter.toResponseDtoPage(entryPage);
     }
 
     @Transactional(readOnly = true)
@@ -50,9 +50,9 @@ public class EntryService {
                 throw new ValidationException("startDate must be before or equal to endDate");
             }
             
-            Pageable validatedPageable = validatePageable(pageable);
+            Pageable validatedPageable = validateAndCreatePageable(pageable);
             Page<EntryEntity> entryPage = entryRepository.findByUserIdAndCreatedAtBetween(userId, start, end, validatedPageable);
-            return entryMapper.toResponseDtoPage(entryPage);
+            return entryConverter.toResponseDtoPage(entryPage);
         } catch (DateTimeParseException e) {
             throw new ValidationException("Invalid date format. Use ISO format (yyyy-MM-ddTHH:mm:ss)");
         }
@@ -60,9 +60,9 @@ public class EntryService {
 
     @Transactional(readOnly = true)
     public Page<EntryResponseDto> getEntriesByEmotion(String userId, String emotion, Pageable pageable) {
-        Pageable validatedPageable = validatePageable(pageable);
+        Pageable validatedPageable = validateAndCreatePageable(pageable);
         Page<EntryEntity> entryPage = entryRepository.findByUserIdAndEmotionsContaining(userId, emotion, validatedPageable);
-        return entryMapper.toResponseDtoPage(entryPage);
+        return entryConverter.toResponseDtoPage(entryPage);
     }
 
     @Transactional(readOnly = true)
@@ -70,7 +70,7 @@ public class EntryService {
         EntryEntity entry = entryRepository.findByIdAndUserId(entryId, userId)
                 .orElseThrow(() -> new NotFoundException("Entry not found"));
         
-        return entryMapper.toResponseDto(entry);
+        return entryConverter.toResponseDto(entry);
     }
 
     public EntryResponseDto createEntry(String userId, EntryRequestDto requestDto) {
@@ -79,10 +79,10 @@ public class EntryService {
         }
 
         String entryId = UUID.randomUUID().toString();
-        EntryEntity entry = entryMapper.toEntity(requestDto, entryId, userId);
+        EntryEntity entry = entryConverter.toEntity(requestDto, entryId, userId);
         
         EntryEntity savedEntry = entryRepository.save(entry);
-        return entryMapper.toResponseDto(savedEntry);
+        return entryConverter.toResponseDto(savedEntry);
     }
 
     public EntryResponseDto updateEntry(String userId, String entryId, EntryRequestDto requestDto) {
@@ -93,10 +93,10 @@ public class EntryService {
             throw new ValidationException("At least one emotion is required");
         }
 
-        entryMapper.updateEntityFromDto(requestDto, entry);
+        entryConverter.updateEntityFromDto(requestDto, entry);
 
         EntryEntity savedEntry = entryRepository.save(entry);
-        return entryMapper.toResponseDto(savedEntry);
+        return entryConverter.toResponseDto(savedEntry);
     }
 
     public void deleteEntry(String userId, String entryId) {
@@ -107,7 +107,7 @@ public class EntryService {
         entryRepository.deleteById(entryId);
     }
 
-    private Pageable validatePageable(Pageable pageable) {
+    private Pageable validateAndCreatePageable(Pageable pageable) {
         int page = Math.max(0, pageable.getPageNumber());
         int pageSize = Math.min(Math.max(1, pageable.getPageSize()), MAX_PAGE_SIZE);
         return PageRequest.of(page, pageSize, pageable.getSort());
