@@ -53,6 +53,16 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A7ADFBDF73F749B8A13BEB83DE55DB8C }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_81FCFEE9783C45498202849A2773ED5E }}
 
+      - name: Configure App Settings for DB
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: 'ReflectlyBE'
+          slot-name: 'Production'
+          configuration-string: |
+            SPRING_DATASOURCE_URL=jdbc:postgresql://ep-muddy-cherry-a117p1hy-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channelBinding=require
+            SPRING_DATASOURCE_USERNAME=neondb_owner
+            SPRING_DATASOURCE_PASSWORD=npg_P13fvARrJxiF
+
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
@@ -60,4 +70,5 @@ jobs:
           app-name: 'ReflectlyBE'
           slot-name: 'Production'
           package: '*.jar'
+
           
