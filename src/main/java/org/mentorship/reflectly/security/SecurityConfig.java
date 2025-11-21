@@ -43,8 +43,7 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(configurer -> configurer
                         .bearerTokenResolver(cookieBearerTokenResolver) // Read token from cookie or Authorization header
-                        .jwt(jwt -> jwt
-                                .decoder(jwtDecoder())
+                        .jwt(jwt -> jwt.decoder(jwtDecoder())
                                 .jwtAuthenticationConverter(googleAuthenticationConverter)));
 
         return http.build();

@@ -6,6 +6,7 @@ public record UserProfileRecord(
     @JsonProperty("id") String id,
     @JsonProperty("email") String email,
     @JsonProperty("fullName") String fullName,
-    @JsonProperty("pictureUrl") String pictureUrl
+    @JsonProperty("pictureUrl") String pictureUrl,
+    @JsonProperty("tokenExpiresAt") Long tokenExpiresAt
 ) {
 }
