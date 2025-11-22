@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.dto.UserProfileRecord;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.repository.UserRepository;
+import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -55,8 +56,29 @@ public class UserService {
     public UserProfileRecord getUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
+        if (authentication instanceof GoogleAuthenticationToken) {
+            GoogleAuthenticationToken googleAuth = (GoogleAuthenticationToken) authentication;
+            UserEntity entity = googleAuth.getUser();
+            Long tokenExpiresAt = googleAuth.getTokenExpiresAt();
+
+            return new UserProfileRecord(
+                    entity.getId().toString(),
+                    entity.getEmail(),
+                    entity.getFullName(),
+                    entity.getPictureUrl(),
+                    tokenExpiresAt
+            );
+        }
+
+        // Fallback if not GoogleAuthenticationToken
         return userRepository.findByEmail(authentication.getName())
-                .map(entity -> new UserProfileRecord(entity.getId().toString(), entity.getEmail(), entity.getFullName(), entity.getPictureUrl()))
+                .map(entity -> new UserProfileRecord(
+                        entity.getId().toString(),
+                        entity.getEmail(),
+                        entity.getFullName(),
+                        entity.getPictureUrl(),
+                        null // No expiration date available
+                ))
                 .orElseThrow(() -> new RuntimeException("User not found with email " + authentication.getName()));
     }
 }

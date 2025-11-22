@@ -25,8 +25,7 @@ public class GoogleAuthenticationConverter implements Converter<Jwt, GoogleAuthe
             GoogleIdToken idToken = googleVerifier.verify(jwt.getTokenValue());
             UserEntity user = userService.findOrCreateUser(idToken.getPayload());
 
-            // Set authentication context
-            GoogleAuthenticationToken authentication = new GoogleAuthenticationToken(user, jwt.getTokenValue());
+            GoogleAuthenticationToken authentication = new GoogleAuthenticationToken(user, jwt.getTokenValue(), jwt);
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             return authentication;
