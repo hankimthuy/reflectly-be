@@ -59,25 +59,21 @@ public class UserService {
         if (authentication instanceof GoogleAuthenticationToken) {
             GoogleAuthenticationToken googleAuth = (GoogleAuthenticationToken) authentication;
             UserEntity entity = googleAuth.getUser();
-            Long tokenExpiresAt = googleAuth.getTokenExpiresAt();
 
             return new UserProfileRecord(
                     entity.getId().toString(),
                     entity.getEmail(),
                     entity.getFullName(),
-                    entity.getPictureUrl(),
-                    tokenExpiresAt
+                    entity.getPictureUrl()
             );
         }
 
-        // Fallback if not GoogleAuthenticationToken
         return userRepository.findByEmail(authentication.getName())
                 .map(entity -> new UserProfileRecord(
                         entity.getId().toString(),
                         entity.getEmail(),
                         entity.getFullName(),
-                        entity.getPictureUrl(),
-                        null // No expiration date available
+                        entity.getPictureUrl()
                 ))
                 .orElseThrow(() -> new RuntimeException("User not found with email " + authentication.getName()));
     }
