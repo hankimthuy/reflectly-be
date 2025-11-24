@@ -1,11 +1,12 @@
 package org.mentorship.reflectly.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.mentorship.reflectly.constants.RouteConstants;
+import org.mentorship.reflectly.dto.ErrorResponseDto;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -24,18 +25,13 @@ public class JwtExpirationFilter extends OncePerRequestFilter {
 
     private final CookieBearerTokenResolver cookieBearerTokenResolver;
     private final JwtDecoder jwtDecoder;
+    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                    HttpServletResponse response,
                                    FilterChain filterChain)
             throws ServletException, IOException {
-
-        String path = request.getRequestURI();
-        if (isPublicPath(path)) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         String token = cookieBearerTokenResolver.resolve(request);
 
@@ -62,20 +58,6 @@ public class JwtExpirationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Check if the request path is a public route that doesn't require authentication.
-     * Public routes are already configured in SecurityConfig with permitAll(), but this check prevents unnecessary JWT decoding for routes that don't need it.
-     */
-    private boolean isPublicPath(String path) {
-        for (String publicRoute : RouteConstants.PUBLIC_ROUTES) {
-            String routePattern = publicRoute.replace("/**", "").replace("**", "");
-            if (path.startsWith(routePattern) || path.equals(routePattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private boolean isJwtExpired(Jwt jwt) {
         Instant expiresAt = jwt.getExpiresAt();
         return expiresAt != null && expiresAt.isBefore(Instant.now());
@@ -91,9 +73,13 @@ public class JwtExpirationFilter extends OncePerRequestFilter {
     }
 
     private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(message)
+                .build();
+        
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":\"" + message + "\"}");
+        response.getWriter().write(objectMapper.writeValueAsString(error));
     }
 }
 
