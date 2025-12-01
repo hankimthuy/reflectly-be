@@ -26,6 +26,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -48,7 +49,7 @@ public class EntryController {
             @Parameter(description = "Start date for filtering (ISO format)") @RequestParam(required = false) String startDate,
             @Parameter(description = "End date for filtering (ISO format)") @RequestParam(required = false) String endDate,
             @Parameter(description = "Emotion to filter by") @RequestParam(required = false) String emotion,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
 
         String userId = getUserIdFromAuthentication(authentication);
 
