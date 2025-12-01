@@ -16,45 +16,42 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.time.Instant;
 
-/** * JWT Expiration Filter to validate token expiration and cookie age older than 1 day before authentication. */
+/**
+ * JWT Expiration Filter to validate token expiration after authentication.
+ */
 @Component
 @RequiredArgsConstructor
 public class JwtExpirationFilter extends OncePerRequestFilter {
 
-    private static final long COOKIE_MAX_AGE_SECONDS = 86400L; // 1 day
-
-    private final CookieBearerTokenResolver cookieBearerTokenResolver;
     private final JwtDecoder jwtDecoder;
     private final ObjectMapper objectMapper;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                   HttpServletResponse response,
-                                   FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        // Retrieve the "Authorization" header from the HTTP request
+        String authorization = request.getHeader("Authorization");
 
-        String token = cookieBearerTokenResolver.resolve(request);
-
-        if (token != null && !token.isEmpty()) {
+        // Check if the "Authorization" header is present and starts with "Bearer "
+        if (authorization != null && authorization.startsWith("Bearer ")) {
+            // Extract the JWT token by removing the "Bearer " prefix
+            String token = authorization.substring(7);
             try {
+                // Decode the JWT token using the JwtDecoder
                 Jwt jwt = jwtDecoder.decode(token);
 
+                // Check if the JWT token is expired
                 if (isJwtExpired(jwt)) {
                     sendUnauthorizedResponse(response, "JWT token expired");
                     return;
                 }
-
-                if (isCookieExpired(jwt)) {
-                    sendUnauthorizedResponse(response, "Cookie expired (older than 1 day)");
-                    return;
-                }
-
             } catch (JwtException e) {
                 sendUnauthorizedResponse(response, "Invalid JWT token");
                 return;
             }
         }
 
+        // Continue the filter chain if the token is valid or no token is provided
         filterChain.doFilter(request, response);
     }
 
@@ -63,20 +60,9 @@ public class JwtExpirationFilter extends OncePerRequestFilter {
         return expiresAt != null && expiresAt.isBefore(Instant.now());
     }
 
-    private boolean isCookieExpired(Jwt jwt) {
-        Instant issuedAt = jwt.getIssuedAt();
-        if (issuedAt == null) {
-            return false;
-        }
-        Instant maxCookieAge = Instant.now().minusSeconds(COOKIE_MAX_AGE_SECONDS);
-        return issuedAt.isBefore(maxCookieAge);
-    }
-
     private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
-        ErrorResponseDto error = ErrorResponseDto.builder()
-                .message(message)
-                .build();
-        
+        ErrorResponseDto error = ErrorResponseDto.builder().message(message).build();
+
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
         response.getWriter().write(objectMapper.writeValueAsString(error));
