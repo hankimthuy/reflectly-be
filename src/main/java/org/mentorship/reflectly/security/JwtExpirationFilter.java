@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.dto.ErrorResponseDto;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -45,7 +44,7 @@ public class JwtExpirationFilter extends OncePerRequestFilter {
                     sendUnauthorizedResponse(response, "JWT token expired");
                     return;
                 }
-            } catch (JwtException e) {
+            } catch (Exception e) {
                 sendUnauthorizedResponse(response, "Invalid JWT token");
                 return;
             }

@@ -39,7 +39,7 @@ public class UserService {
 
             if (!Objects.equals(fullName, userToUpdate.getFullName()) || !Objects.equals(pictureUrl, userToUpdate.getPictureUrl())) {
                 userToUpdate.setFullName(fullName);
-                userToUpdate.setPictureUrl(pictureUrl);
+                userToUpdate.setPictureUrl(pictureUrl != null ? pictureUrl : "");
                 return userRepository.save(userToUpdate);
             }
 
@@ -49,7 +49,7 @@ public class UserService {
         UserEntity newUser = new UserEntity();
         newUser.setEmail(email);
         newUser.setFullName(fullName != null ? fullName : "");
-        newUser.setPictureUrl(pictureUrl);
+        newUser.setPictureUrl(pictureUrl != null ? pictureUrl : "");
         return userRepository.save(newUser);
     }
 
