@@ -47,11 +47,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Allow specific origins
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:*",
-                "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net"));
+                // Allow specific origins
+                configuration.setAllowedOriginPatterns(Arrays.asList(
+                                "http://localhost:*",
+                                "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net,",
+                                "https://gray-island-018b47d00.3.azurestaticapps.net"));
 
         // Allow all HTTP methods (OPTIONS required for CORS preflight requests)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
