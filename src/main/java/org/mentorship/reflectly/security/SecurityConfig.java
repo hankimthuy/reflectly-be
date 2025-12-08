@@ -48,16 +48,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
                 // Allow specific origins
-        configuration.setAllowedOriginPatterns("*");
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
 
         // Allow all HTTP methods (OPTIONS required for CORS preflight requests)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // Allow all headers
-        configuration.setAllowedHeaders("*");
+        configuration.setAllowedHeaders(Arrays.asList("*"));
 
         // Expose headers
-        configuration.setExposedHeaders("*");
+        configuration.setExposedHeaders(Arrays.asList("*"));
 
         // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
