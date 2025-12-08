@@ -48,31 +48,16 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
                 // Allow specific origins
-                configuration.setAllowedOriginPatterns(Arrays.asList(
-                                "http://localhost:*",
-                                "https://reflectly-ajb7dchaaxewgte0.southeastasia-01.azurewebsites.net,",
-                                "https://gray-island-018b47d00.3.azurestaticapps.net"));
+        configuration.setAllowedOriginPatterns("*"));
 
         // Allow all HTTP methods (OPTIONS required for CORS preflight requests)
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         // Allow all headers
-        configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Cache-Control",
-                "Accept",
-                "X-Requested-With",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers"));
+        configuration.setAllowedHeaders("*"));
 
         // Expose headers
-        configuration.setExposedHeaders(Arrays.asList(
-                "Access-Control-Allow-Origin",
-                "Access-Control-Allow-Credentials",
-                "Access-Control-Allow-Methods",
-                "Access-Control-Allow-Headers"));
+        configuration.setExposedHeaders("*"));
 
         // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
