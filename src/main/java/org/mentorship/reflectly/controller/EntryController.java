@@ -3,6 +3,7 @@ package org.mentorship.reflectly.controller;
 import org.mentorship.reflectly.constants.ApiConstants;
 import org.mentorship.reflectly.dto.EntryRequestDto;
 import org.mentorship.reflectly.dto.EntryResponseDto;
+import org.mentorship.reflectly.dto.PagedResponseDto;
 import org.mentorship.reflectly.exception.ValidationException;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.EntryService;
@@ -40,34 +41,31 @@ public class EntryController {
     @Operation(summary = "Get all entries", description = "Get all entries for the current user with optional filtering by date range or emotion. Note: Both startDate and endDate must be provided together for date range filtering.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Entries retrieved successfully"),
-            @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Validation error (e.g., only one date parameter provided)"),
+            @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Validation error"),
             @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
     })
     @GetMapping
-    public ResponseEntity<Page<EntryResponseDto>> getAllEntries(
+    public ResponseEntity<PagedResponseDto<EntryResponseDto>> getAllEntries(
             GoogleAuthenticationToken authentication,
-            @Parameter(description = "Start date for filtering (ISO format)") @RequestParam(required = false) String startDate,
-            @Parameter(description = "End date for filtering (ISO format)") @RequestParam(required = false) String endDate,
-            @Parameter(description = "Emotion to filter by") @RequestParam(required = false) String emotion,
             @ParameterObject Pageable pageable) {
 
         String userId = getUserIdFromAuthentication(authentication);
+        Page<EntryResponseDto> pageResult = entryService.getAllEntries(userId, pageable);
 
-        // Validate date range parameters - both must be provided together
-        if ((startDate != null && endDate == null) || (startDate == null && endDate != null)) {
-            throw new ValidationException(
-                    "Both startDate and endDate must be provided together for date range filtering");
+        // Generate nextLink
+        String nextLink = null;
+        if (pageResult.hasNext()) {
+            // Build URL from current request, incrementing page number
+            nextLink = ServletUriComponentsBuilder.fromCurrentRequest()
+                    .replaceQueryParam("page", pageResult.getNumber() + 1)
+                    .toUriString();
         }
 
-        if (startDate != null && endDate != null) {
-            return ResponseEntity.ok(entryService.getEntriesByDateRange(userId, startDate, endDate, pageable));
-        }
-
-        if (emotion != null) {
-            return ResponseEntity.ok(entryService.getEntriesByEmotion(userId, emotion, pageable));
-        }
-
-        return ResponseEntity.ok(entryService.getAllEntries(userId, pageable));
+        return ResponseEntity.ok(new PagedResponseDto<>(
+                pageResult.getContent(),
+                pageResult.getTotalElements(),
+                nextLink
+        ));
     }
 
     @Operation(summary = "Get entry by ID", description = "Get a specific entry by its ID for the current user")
