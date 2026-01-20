@@ -1,32 +1,41 @@
-# Reflectly Application Backend
+# MimoSe Backend Server
 
-This is a Spring Boot application that provides a RESTful API for managing quizzes, including CRUD (Create, Read, Update, Delete) operations. It also integrates Google OAuth2 for user authentication, ensuring that only authenticated users can access the API.
+> **"Leading Self"** – The backend service powering the MimoSe personal growth application.
+
+MimoSe helps users understand and manage themselves through self-reflection (Innerverse), social awareness (Outerverse), and actionable protocols (Bridge).
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Language** | Java 17+ |
+| **Framework** | Spring Boot 3.x |
+| **Data Persistence** | Spring Data JPA |
+| **Database** | PostgreSQL |
+| **Authentication** | Spring Security, JWT, Google OAuth2 |
+| **API Documentation** | Springdoc OpenAPI (Swagger UI) |
+| **Build Tool** | Maven |
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [PRD Summary](./documentation/00-Product-Context/PRD-Summary.md) | Product context: Innerverse, Outerverse, Bridge concepts |
+| [Schema ERD](./documentation/01-Database/Schema-ERD.md) | Database entities and relationships |
+| [Data Dictionary](./documentation/01-Database/Data-Dictionary.md) | Field definitions, enums, and constraints |
+| [API Endpoints](./documentation/02-API-Specs/Endpoints.md) | REST API specifications |
 
 ## Features
 
-* **Reflectly Management:**
-    * Create new quizzes.
-    * Retrieve quizzes by ID or list all quizzes.
-    * Update existing quizzes.
-    * Delete quizzes.
-* **Google OAuth2 Login:** Secure user authentication using Google as an OAuth2 provider.
-* **RESTful API:** Clean and well-structured API endpoints.
-* **Database Integration:** Configurable for PostgreSQL (for production/persistent data).
-
-## Technologies Used
-
-* **Backend Framework:** Spring Boot 3.x
-* **Web:** Spring Web (for RESTful APIs)
-* **Data Persistence:** Spring Data JPA
-* **Database:** PostgreSQL (for production)
-* **Authentication:** Spring Security, Spring OAuth2 Client
-* **API Documentation:** Springdoc OpenAPI (Swagger UI)
-* **Build Tool:** Maven
-* **Language:** Java 17+
+* **Energy Tracking**: Log and analyze personal energy levels with context
+* **Orbit System**: Map social connections by closeness and impact
+* **Action Protocols**: Define response scripts for triggers
+* **Google OAuth2 Login**: Secure user authentication
+* **RESTful API**: Standard JSON responses
 
 ## Getting Started
 
-Follow these steps to set up and run the Quiz Application locally.
+Follow these steps to set up and run the MimoSe Backend Server locally.
 
 ### Prerequisites
 
@@ -107,4 +116,4 @@ The application will start on `http://localhost:8080`.
 
 ## API Endpoints
 
-The Quiz API provides the following RESTful endpoints. All endpoints require authentication (via Google OAuth2).
+The MimoSe API provides the following RESTful endpoints. All endpoints require authentication (via Google OAuth2). See [API Endpoints](./documentation/02-API-Specs/Endpoints.md) for full specifications.
