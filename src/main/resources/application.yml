@@ -17,3 +17,7 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+app:
+  jwt:
+    secret: ${JWT_SECRET:reflectly-default-jwt-secret-key-change-in-production-min-32-chars}
+    expiration-ms: 86400000

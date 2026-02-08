@@ -23,6 +23,7 @@ public class SecurityConfig {
 
     private final GoogleAuthenticationConverter googleAuthenticationConverter;
     private final JwtExpirationFilter jwtExpirationFilter;
+    private final BackendJwtAuthenticationFilter backendJwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers(RouteConstants.PUBLIC_ROUTES).permitAll()
                         // All other requests require authentication
                         .anyRequest().authenticated())
+                .addFilterBefore(backendJwtAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(jwtExpirationFilter, BearerTokenAuthenticationFilter.class)
                 .oauth2ResourceServer(configurer -> configurer
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(googleAuthenticationConverter)));

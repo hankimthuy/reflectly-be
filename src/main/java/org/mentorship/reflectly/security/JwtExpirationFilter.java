@@ -12,6 +12,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+
 import java.io.IOException;
 import java.time.Instant;
 
@@ -24,6 +26,18 @@ public class JwtExpirationFilter extends OncePerRequestFilter {
 
     private final JwtDecoder jwtDecoder;
     private final ObjectMapper objectMapper;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        // Skip public auth routes
+        if (path.startsWith("/api/auth/")) {
+            return true;
+        }
+        // Skip if already authenticated by BackendJwtAuthenticationFilter
+        return SecurityContextHolder.getContext().getAuthentication() != null
+                && SecurityContextHolder.getContext().getAuthentication().isAuthenticated();
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
