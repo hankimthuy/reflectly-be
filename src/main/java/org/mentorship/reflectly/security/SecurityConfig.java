@@ -58,8 +58,8 @@ public class SecurityConfig {
         // Allow all headers
         configuration.setAllowedHeaders(Arrays.asList("*"));
 
-        // Expose headers
-        configuration.setExposedHeaders(Arrays.asList("*"));
+        // Expose headers (Safari does not support wildcard '*' with credentials)
+        configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "Content-Length"));
 
         // Allow credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
