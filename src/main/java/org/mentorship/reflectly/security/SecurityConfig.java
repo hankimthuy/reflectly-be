@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -24,11 +25,13 @@ public class SecurityConfig {
     private final GoogleAuthenticationConverter googleAuthenticationConverter;
     private final JwtExpirationFilter jwtExpirationFilter;
     private final BackendJwtAuthenticationFilter backendJwtAuthenticationFilter;
+    private final PrivateNetworkAccessFilter privateNetworkAccessFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .addFilterBefore(privateNetworkAccessFilter, SecurityContextHolderFilter.class)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Enable CORS at
                 // security layer
                 .sessionManagement(session -> session
