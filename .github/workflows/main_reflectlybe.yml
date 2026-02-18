@@ -54,14 +54,16 @@ jobs:
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_81FCFEE9783C45498202849A2773ED5E }}
 
       - name: Configure App Settings for DB
-        uses: azure/webapps-deploy@v3
+        uses: azure/appservice-settings@v1
         with:
           app-name: 'ReflectlyBE'
           slot-name: 'Production'
-          configuration-string: |
-            SPRING_DATASOURCE_URL=jdbc:postgresql://ep-muddy-cherry-a117p1hy-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channelBinding=require
-            SPRING_DATASOURCE_USERNAME=neondb_owner
-            SPRING_DATASOURCE_PASSWORD=npg_P13fvARrJxiF
+          app-settings-json: |
+            [
+              { "name": "DB_URL", "value": "${{ secrets.DB_URL }}", "slotSetting": false },
+              { "name": "DB_USERNAME", "value": "${{ secrets.DB_USERNAME }}", "slotSetting": false },
+              { "name": "DB_PASSWORD", "value": "${{ secrets.DB_PASSWORD }}", "slotSetting": false }
+            ]
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
