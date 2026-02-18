@@ -13,13 +13,16 @@ DROP TABLE IF EXISTS users CASCADE;
 -- =====================================================
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
-    email VARCHAR(254) NOT NULL UNIQUE,
+    email VARCHAR(254) UNIQUE,
+    username VARCHAR(50) UNIQUE,
     full_name VARCHAR(255),
-    picture_url VARCHAR(500) NOT NULL
+    picture_url VARCHAR(500) NOT NULL,
+    password_hash VARCHAR(255)
 );
 
--- Index for users table
+-- Indexes for users table
 CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_username ON users(username);
 
 -- =====================================================
 -- 2. FACTORS TABLE

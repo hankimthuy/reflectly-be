@@ -21,12 +21,18 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true, length = 254)
+    @Column(unique = true, length = 254)
     private String email;
+
+    @Column(unique = true, length = 50)
+    private String username;
 
     @Column(name = "full_name")
     private String fullName;
 
     @Column(name = "picture_url", nullable = false)
     private String pictureUrl;
+
+    @Column(name = "password_hash")
+    private String passwordHash;
 }

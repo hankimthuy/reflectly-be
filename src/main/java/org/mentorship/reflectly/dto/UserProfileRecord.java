@@ -5,7 +5,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record UserProfileRecord(
     @JsonProperty("id") String id,
     @JsonProperty("email") String email,
+    @JsonProperty("username") String username,
     @JsonProperty("fullName") String fullName,
-    @JsonProperty("pictureUrl") String pictureUrl
+    @JsonProperty("pictureUrl") String pictureUrl,
+    @JsonProperty("hasPassword") boolean hasPassword
 ) {
 }

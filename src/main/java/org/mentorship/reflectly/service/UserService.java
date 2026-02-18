@@ -8,6 +8,7 @@ import org.mentorship.reflectly.repository.UserRepository;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.Optional;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Find existing user by email or create a new one based on Google profile data
@@ -53,28 +55,108 @@ public class UserService {
         return userRepository.save(newUser);
     }
 
-    public UserProfileRecord getUserProfile() {
+    /**
+     * Create a new user with username and password (credential-based signup).
+     */
+    @Transactional
+    public UserEntity createUser(String username, String password, String fullName) {
+        if (userRepository.findByUsername(username).isPresent()) {
+            throw new IllegalArgumentException("Username is already taken");
+        }
+
+        UserEntity newUser = new UserEntity();
+        newUser.setUsername(username);
+        newUser.setFullName(fullName != null ? fullName : "");
+        newUser.setPictureUrl("");
+        newUser.setPasswordHash(passwordEncoder.encode(password));
+        return userRepository.save(newUser);
+    }
+
+    /**
+     * Authenticate a user by username and password.
+     *
+     * @return the authenticated UserEntity
+     * @throws IllegalArgumentException if credentials are invalid
+     */
+    public UserEntity authenticateByCredentials(String username, String password) {
+        UserEntity user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+
+        if (user.getPasswordHash() == null || !passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid username or password");
+        }
+
+        return user;
+    }
+
+    /**
+     * Change the password for the currently authenticated user.
+     */
+    @Transactional
+    public UserEntity changePassword(String currentPassword, String newPassword) {
+        UserEntity user = getCurrentUserEntity();
+
+        // If user already has a password, verify the current one
+        if (user.getPasswordHash() != null) {
+            if (currentPassword == null || !passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+                throw new IllegalArgumentException("Current password is incorrect");
+            }
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        return userRepository.save(user);
+    }
+
+    /**
+     * Update the display name for the currently authenticated user.
+     */
+    @Transactional
+    public UserEntity updateProfile(String fullName) {
+        UserEntity user = getCurrentUserEntity();
+        user.setFullName(fullName);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Update the avatar URL for the currently authenticated user.
+     */
+    @Transactional
+    public UserEntity updateAvatar(String pictureUrl) {
+        UserEntity user = getCurrentUserEntity();
+        user.setPictureUrl(pictureUrl);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Get the currently authenticated UserEntity from the security context.
+     */
+    public UserEntity getCurrentUserEntity() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        if (authentication instanceof GoogleAuthenticationToken) {
-            GoogleAuthenticationToken googleAuth = (GoogleAuthenticationToken) authentication;
-            UserEntity entity = googleAuth.getUser();
-
-            return new UserProfileRecord(
-                    entity.getId().toString(),
-                    entity.getEmail(),
-                    entity.getFullName(),
-                    entity.getPictureUrl()
-            );
+        if (authentication instanceof GoogleAuthenticationToken googleAuth) {
+            return googleAuth.getUser();
         }
 
         return userRepository.findByEmail(authentication.getName())
-                .map(entity -> new UserProfileRecord(
-                        entity.getId().toString(),
-                        entity.getEmail(),
-                        entity.getFullName(),
-                        entity.getPictureUrl()
-                ))
                 .orElseThrow(() -> new RuntimeException("User not found with email " + authentication.getName()));
+    }
+
+    public UserProfileRecord getUserProfile() {
+        UserEntity entity = getCurrentUserEntity();
+        return toProfileRecord(entity);
+    }
+
+    /**
+     * Convert a UserEntity to a UserProfileRecord.
+     */
+    public UserProfileRecord toProfileRecord(UserEntity entity) {
+        return new UserProfileRecord(
+                entity.getId().toString(),
+                entity.getEmail(),
+                entity.getUsername(),
+                entity.getFullName(),
+                entity.getPictureUrl(),
+                entity.getPasswordHash() != null
+        );
     }
 }

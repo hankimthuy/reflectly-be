@@ -8,6 +8,9 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.security.oauth2.server.resource.web.DefaultBearerTokenResolver;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.context.SecurityContextHolderFilter;
@@ -44,9 +47,26 @@ public class SecurityConfig {
                 .addFilterBefore(backendJwtAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(jwtExpirationFilter, BearerTokenAuthenticationFilter.class)
                 .oauth2ResourceServer(configurer -> configurer
+                        .bearerTokenResolver(skipIfAlreadyAuthenticated())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(googleAuthenticationConverter)));
 
         return http.build();
+    }
+
+    /**
+     * Custom BearerTokenResolver that returns null when the request is already
+     * authenticated by BackendJwtAuthenticationFilter, preventing Spring's
+     * oauth2 BearerTokenAuthenticationFilter from re-processing backend JWTs.
+     */
+    private BearerTokenResolver skipIfAlreadyAuthenticated() {
+        DefaultBearerTokenResolver defaultResolver = new DefaultBearerTokenResolver();
+        return request -> {
+            var auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                return null;
+            }
+            return defaultResolver.resolve(request);
+        };
     }
 
     @Bean

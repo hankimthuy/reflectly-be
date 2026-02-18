@@ -16,6 +16,8 @@ public final class RouteConstants {
             "/actuator/health", "/actuator/info",
             // Static resources - handled by WebMvcConfig
             "/assets/**", "/static/**", "/*.html", "/*.js", "/*.css", "/*.svg", "/*.ico",
+            // Uploaded files (avatars, etc.)
+            "/uploads/**",
             // Authentication
             "/api/auth/**",
             // Public API

@@ -49,17 +49,32 @@ public class AuthService {
         GoogleIdToken.Payload payload = idToken.getPayload();
         UserEntity user = userService.findOrCreateUser(payload);
 
+        return buildAuthResponse(user);
+    }
+
+    /**
+     * Authenticate a user with username and password credentials.
+     */
+    public AuthLoginResponseDto loginWithCredentials(String username, String password) {
+        UserEntity user = userService.authenticateByCredentials(username, password);
+        return buildAuthResponse(user);
+    }
+
+    /**
+     * Register a new user with username, password, and optional display name.
+     */
+    public AuthLoginResponseDto signup(String username, String password, String fullName) {
+        UserEntity user = userService.createUser(username, password, fullName);
+        return buildAuthResponse(user);
+    }
+
+    private AuthLoginResponseDto buildAuthResponse(UserEntity user) {
         String backendToken = jwtService.generateToken(
                 user.getId().toString(),
                 user.getEmail()
         );
 
-        UserProfileRecord profile = new UserProfileRecord(
-                user.getId().toString(),
-                user.getEmail(),
-                user.getFullName(),
-                user.getPictureUrl()
-        );
+        UserProfileRecord profile = userService.toProfileRecord(user);
 
         return AuthLoginResponseDto.builder()
                 .token(backendToken)
