@@ -10,6 +10,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AuthLoginRequestDto {
 
-    @NotBlank(message = "Google ID token is required")
-    private String idToken;
+    @NotBlank(message = "Google Auth code is required")
+    private String authCode;
 }

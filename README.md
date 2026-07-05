@@ -1,119 +1,120 @@
-# MimoSe Backend Server
+# Reflectly / MimoSe Backend
 
-> **"Leading Self"** – The backend service powering the MimoSe personal growth application.
-
-MimoSe helps users understand and manage themselves through self-reflection (Innerverse), social awareness (Outerverse), and actionable protocols (Bridge).
+> **"Leading Self"** — Spring Boot REST API for the MimoSe personal journal application.
 
 ## Tech Stack
 
 | Category | Technology |
 |----------|------------|
-| **Language** | Java 17+ |
-| **Framework** | Spring Boot 3.x |
-| **Data Persistence** | Spring Data JPA |
-| **Database** | PostgreSQL |
-| **Authentication** | Spring Security, JWT, Google OAuth2 |
-| **API Documentation** | Springdoc OpenAPI (Swagger UI) |
-| **Build Tool** | Maven |
+| Language | Java 21 |
+| Framework | Spring Boot 3.5 |
+| Database | PostgreSQL |
+| Auth | Google OAuth (auth code) + username/password → backend JWT |
+| API Docs | Springdoc OpenAPI — `/swagger-ui.html` |
+| Build | Maven |
 
-## Documentation
+## Implemented API
 
-| Document | Description |
-|----------|-------------|
-| [PRD Summary](./documentation/00-Product-Context/PRD-Summary.md) | Product context: Innerverse, Outerverse, Bridge concepts |
-| [Schema ERD](./documentation/01-Database/Schema-ERD.md) | Database entities and relationships |
-| [Data Dictionary](./documentation/01-Database/Data-Dictionary.md) | Field definitions, enums, and constraints |
-| [API Endpoints](./documentation/02-API-Specs/Endpoints.md) | REST API specifications |
+| Area | Endpoints |
+|------|-----------|
+| Auth | `POST /api/auth/google`, `/login`, `/signup` |
+| Users | `GET/PUT /api/users/profile`, `PUT /password`, `POST /avatar` |
+| Entries | CRUD `/api/entries` |
 
-## Features
+> Legacy docs under `documentation/` may describe planned features (energy, orbit) that are **not implemented**. Trust the controllers and Swagger UI.
 
-* **Energy Tracking**: Log and analyze personal energy levels with context
-* **Orbit System**: Map social connections by closeness and impact
-* **Action Protocols**: Define response scripts for triggers
-* **Google OAuth2 Login**: Secure user authentication
-* **RESTful API**: Standard JSON responses
+## Project Structure
 
-## Getting Started
+```
+src/main/java/org/mentorship/reflectly/
+├── controller/     REST endpoints
+├── service/        Business logic
+├── repository/     Spring Data JPA
+├── model/          UserEntity, EntryEntity
+├── security/       JWT filters, CORS, Google auth
+└── config/         Swagger, auditing, static files
+```
 
-Follow these steps to set up and run the MimoSe Backend Server locally.
+## Local Setup
 
 ### Prerequisites
 
-* **Java Development Kit (JDK) 17 or higher**
-* **Maven** (or Gradle if you convert the project)
-* **Google Cloud Project:**
-    * Create a new project in the [Google Cloud Console](https://console.cloud.google.com/).
-    * Enable the "Google People API" (or relevant APIs for user info).
-    * Go to "APIs & Services" -> "Credentials".
-    * Create an "OAuth client ID" of type "Web application".
-    * Configure "Authorized JavaScript origins" (e.g., `http://localhost:8080~~~~~~~~~~~~`) and "Authorized redirect URIs" (e.g., `http://localhost:8080/login/oauth2/code/google`).
-    * Note down your **Client ID** and **Client Secret**.
+- JDK 21
+- Docker (for PostgreSQL)
+- Google Cloud OAuth **Web application** client (Client ID + Secret)
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/hankimthuy/reflectly-be.git
-cd reflectly-be
-````
-
-### 2. Environment Configuration
-
-**IMPORTANT SECURITY NOTE:** This application uses environment variables for sensitive configuration to avoid hardcoded credentials.
-
-1. **Create a `.env` file in the project root:**
-   ```bash
-   # Database Configuration
-   DB_URL=jdbc:postgresql://localhost:5432/reflectly
-   DB_USERNAME=postgres
-   DB_PASSWORD=your_secure_password_here
-   
-   # JWT Configuration
-   JWT_SECRET=your_jwt_secret_key_here_minimum_32_characters
-   JWT_EXPIRATION=86400000
-   
-   # Spring Profile (optional)
-   SPRING_PROFILES_ACTIVE=local
-   ```
-
-2. **Set up PostgreSQL database:**
-   ```bash
-   # Using Docker (recommended)
-   docker run --name reflectly-postgres \
-     -e POSTGRES_USER=postgres \
-     -e POSTGRES_PASSWORD=your_secure_password_here \
-     -e POSTGRES_DB=reflectly \
-     -p 5432:5432 \
-     -d postgres:13
-   ```
-
-3. **Security Best Practices:**
-   - Never commit `.env` files to version control
-   - Use strong, unique passwords for database access
-   - Generate a secure JWT secret (minimum 32 characters)
-   - Use different credentials for different environments (dev, staging, production)
-
-### 3. Google Authentication
-
-This application uses Google ID Token verification for authentication. The application validates Google ID tokens sent from the frontend without requiring OAuth2 client configuration.
+### 1. Start database
 
 ```bash
 docker-compose up -d
 ```
 
-### 4. Build the Application
+Default credentials match [`.env.example`](./.env.example): `test_user` / `test_password`, database `reflectly`.
+
+### 2. Configure environment
+
+Copy the example file and fill in values:
 
 ```bash
-mvn clean install
+cp .env.example .env
 ```
 
-### 5. Run the Application
+Export variables before running (Spring Boot reads env vars; `.env` is not auto-loaded):
+
+```powershell
+# PowerShell example
+Get-Content .env | ForEach-Object {
+  if ($_ -match '^([^#=]+)=(.*)$') { Set-Item -Path "env:$($matches[1])" -Value $matches[2] }
+}
+```
+
+Required variables: `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+
+### 3. Run
 
 ```bash
 mvn spring-boot:run
 ```
 
-The application will start on `http://localhost:8080`.
+API: `http://localhost:8080` · Swagger: `http://localhost:8080/swagger-ui.html`
 
-## API Endpoints
+### Google OAuth setup
 
-The MimoSe API provides the following RESTful endpoints. All endpoints require authentication (via Google OAuth2). See [API Endpoints](./documentation/02-API-Specs/Endpoints.md) for full specifications.
+1. Create a **Web application** OAuth client in [Google Cloud Console](https://console.cloud.google.com/).
+2. Add **Authorized JavaScript origins**: `http://localhost:5173` (frontend dev server).
+3. Use the same Client ID in backend (`GOOGLE_CLIENT_ID`) and frontend (`VITE_GOOGLE_CLIENT_ID`).
+4. Backend exchanges the auth code using `GOOGLE_CLIENT_SECRET` with redirect URI `postmessage` (react-oauth/google).
+
+## Branches & Deployment
+
+| Branch | Deploy target | Workflow |
+|--------|---------------|----------|
+| `develop` | AWS EC2 (staging) | `aws-deploy-backend.yml` |
+| `main` | Azure Web App `ReflectlyBE` | `main_reflectlybe.yml` |
+
+**Release flow:** develop → test → PR to `main` → Azure production deploy.
+
+### GitHub Secrets (Azure production)
+
+| Secret | Purpose |
+|--------|---------|
+| `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` | PostgreSQL |
+| `JWT_SECRET` | Backend JWT signing |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | Google login |
+| `APP_CORS_ALLOWED_ORIGINS` | Comma-separated frontend URLs |
+| `BE_HEALTH_URL` | Optional override for post-deploy health check |
+| `AZUREAPPSERVICE_*` | Azure OIDC deploy credentials |
+
+## Known Limitations
+
+- **No automated tests** in backend yet — CI runs `mvn verify -DskipTests`.
+- **Avatar storage** uses local filesystem (`uploads/avatars/`). On Azure App Service, files are lost on redeploy unless a persistent mount or blob storage is configured. Migrate to Azure Blob Storage before scaling.
+- **CORS** is configurable via `APP_CORS_ALLOWED_ORIGINS` (defaults to localhost in dev, Azure SWA URL in prod profile).
+
+## Documentation
+
+| Document | Notes |
+|----------|-------|
+| [PRD Summary](./documentation/00-Product-Context/PRD-Summary.md) | Product vision |
+| [Schema ERD](./documentation/01-Database/Schema-ERD.md) | Database design |
+| [API Endpoints](./documentation/02-API-Specs/Endpoints.md) | Partially outdated — see Swagger for actual API |

@@ -29,17 +29,17 @@ public class AuthController {
 
     @Operation(
         summary = "Login with Google",
-        description = "Exchange a Google ID token for a backend JWT and user profile"
+        description = "Exchange a Google authorization code for a backend JWT and user profile"
     )
     @ApiResponses(value = {
         @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Login successful"),
-        @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Invalid Google ID token"),
+        @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Invalid Google auth code"),
         @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Google token verification failed")
     })
     @PostMapping("/google")
     public ResponseEntity<AuthLoginResponseDto> loginWithGoogle(
             @Valid @RequestBody AuthLoginRequestDto request) {
-        AuthLoginResponseDto response = authService.loginWithGoogle(request.getIdToken());
+        AuthLoginResponseDto response = authService.loginWithGoogle(request.getAuthCode());
         return ResponseEntity.ok(response);
     }
 

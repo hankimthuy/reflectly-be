@@ -2,11 +2,16 @@ package org.mentorship.reflectly.service;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeTokenRequest;
+import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.dto.AuthLoginResponseDto;
 import org.mentorship.reflectly.dto.UserProfileRecord;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.security.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -27,19 +32,37 @@ public class AuthService {
     private final UserService userService;
     private final JwtService jwtService;
 
+    @Value("${app.google.client-id}")
+    private String clientId;
+
+    @Value("${app.google.client-secret}")
+    private String clientSecret;
+
     /**
-     * Exchange a Google ID token for a backend JWT and user profile.
+     * Exchange a Google Auth Code for an ID Token, then verify and issue a backend JWT.
      *
-     * @param googleIdTokenString the raw Google ID token from the frontend
+     * @param authCode the raw Google authorization code from the frontend
      * @return response containing backend JWT and user profile
-     * @throws IllegalArgumentException if the Google ID token is invalid
+     * @throws IllegalArgumentException if the Google Auth code or ID token is invalid
      */
-    public AuthLoginResponseDto loginWithGoogle(String googleIdTokenString) {
+    public AuthLoginResponseDto loginWithGoogle(String authCode) {
         GoogleIdToken idToken;
         try {
-            idToken = googleIdTokenVerifier.verify(googleIdTokenString);
+            // Exchange authorization code for tokens
+            GoogleTokenResponse tokenResponse = new GoogleAuthorizationCodeTokenRequest(
+                    new NetHttpTransport(), 
+                    GsonFactory.getDefaultInstance(),
+                    "https://oauth2.googleapis.com/token", 
+                    clientId, 
+                    clientSecret,
+                    authCode, 
+                    "postmessage") // Redirect URI used by react-oauth/google
+                    .execute();
+
+            String idTokenString = tokenResponse.getIdToken();
+            idToken = googleIdTokenVerifier.verify(idTokenString);
         } catch (GeneralSecurityException | IOException e) {
-            throw new IllegalArgumentException("Failed to verify Google ID token", e);
+            throw new IllegalArgumentException("Failed to verify Google Auth Code or ID token", e);
         }
 
         if (idToken == null) {

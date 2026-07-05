@@ -62,7 +62,12 @@ jobs:
             [
               { "name": "DB_URL", "value": "${{ secrets.DB_URL }}", "slotSetting": false },
               { "name": "DB_USERNAME", "value": "${{ secrets.DB_USERNAME }}", "slotSetting": false },
-              { "name": "DB_PASSWORD", "value": "${{ secrets.DB_PASSWORD }}", "slotSetting": false }
+              { "name": "DB_PASSWORD", "value": "${{ secrets.DB_PASSWORD }}", "slotSetting": false },
+              { "name": "JWT_SECRET", "value": "${{ secrets.JWT_SECRET }}", "slotSetting": false },
+              { "name": "GOOGLE_CLIENT_ID", "value": "${{ secrets.GOOGLE_CLIENT_ID }}", "slotSetting": false },
+              { "name": "GOOGLE_CLIENT_SECRET", "value": "${{ secrets.GOOGLE_CLIENT_SECRET }}", "slotSetting": false },
+              { "name": "SPRING_PROFILES_ACTIVE", "value": "prod", "slotSetting": false },
+              { "name": "APP_CORS_ALLOWED_ORIGINS", "value": "${{ secrets.APP_CORS_ALLOWED_ORIGINS }}", "slotSetting": false }
             ]
 
       - name: Deploy to Azure Web App
@@ -73,4 +78,18 @@ jobs:
           slot-name: 'Production'
           package: '*.jar'
 
-          
+      - name: Health check
+        env:
+          HEALTH_URL: ${{ secrets.BE_HEALTH_URL }}
+        run: |
+          URL="${HEALTH_URL:-https://reflectlybe-dgcnc3fxdkb0eccc.eastasia-01.azurewebsites.net}"
+          for i in {1..12}; do
+            if curl -sf "$URL/actuator/health"; then
+              echo "Backend health check passed"
+              exit 0
+            fi
+            echo "Waiting for backend to become healthy... ($i/12)"
+            sleep 10
+          done
+          echo "Backend health check failed"
+          exit 1
