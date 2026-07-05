@@ -18,22 +18,20 @@ Apply these settings on GitHub for both `reflectly-be` and `reflectly-fe` reposi
 
 ## Apply via GitHub CLI
 
-```bash
-# Backend
-gh api repos/hankimthuy/reflectly-be/branches/main/protection \
-  --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["build"]}' \
-  --field enforce_admins=true \
-  --field required_pull_request_reviews='{"required_approving_review_count":0}' \
-  --field restrictions=null
+Use a JSON input file to avoid shell escaping issues:
 
-# Frontend
-gh api repos/hankimthuy/reflectly-fe/branches/main/protection \
-  --method PUT \
-  --field required_status_checks='{"strict":true,"contexts":["test"]}' \
-  --field enforce_admins=true \
-  --field required_pull_request_reviews='{"required_approving_review_count":0}' \
-  --field restrictions=null
+```bash
+# Backend — save as branch-protection.json:
+# {
+#   "required_status_checks": { "strict": true, "contexts": ["build"] },
+#   "enforce_admins": true,
+#   "required_pull_request_reviews": { "required_approving_review_count": 0 },
+#   "restrictions": null
+# }
+
+gh api repos/hankimthuy/reflectly-be/branches/main/protection --method PUT --input branch-protection.json
+gh api repos/hankimthuy/reflectly-fe/branches/main/protection --method PUT --input branch-protection-fe.json
+# branch-protection-fe.json uses "contexts": ["test"]
 ```
 
 > Requires `gh auth login` with admin access to the repository.
