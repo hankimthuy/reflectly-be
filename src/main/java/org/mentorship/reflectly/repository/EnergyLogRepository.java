@@ -6,6 +6,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -15,6 +17,12 @@ public interface EnergyLogRepository extends JpaRepository<EnergyLogEntity, Stri
      * Find all energy logs by user ID with pagination, most recent first.
      */
     Page<EnergyLogEntity> findByUserIdOrderByLoggedAtDesc(String userId, Pageable pageable);
+
+    /**
+     * Find energy logs within a time range (oldest first) for trend/dashboard aggregation.
+     * Bounded by range so the payload stays small and can be bucketed client-side.
+     */
+    List<EnergyLogEntity> findByUserIdAndLoggedAtBetweenOrderByLoggedAtAsc(String userId, Instant from, Instant to);
 
     /**
      * Find energy logs by user ID and context tag with pagination, most recent first.

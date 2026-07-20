@@ -16,6 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.util.StringUtils;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,6 +28,8 @@ import java.util.UUID;
 public class EnergyLogService {
 
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int DEFAULT_RANGE_DAYS = 30;
+    private static final int MAX_RANGE_DAYS = 366;
 
     private final EnergyLogRepository energyLogRepository;
     private final EnergyLogConverter energyLogConverter;
@@ -36,6 +41,21 @@ public class EnergyLogService {
                 ? energyLogRepository.findByUserIdAndContextTagOrderByLoggedAtDesc(userId, contextTag, validatedPageable)
                 : energyLogRepository.findByUserIdOrderByLoggedAtDesc(userId, validatedPageable);
         return energyLogConverter.toResponseDtoPage(logPage);
+    }
+
+    /**
+     * Return raw energy-log points for the last {@code days} days (oldest first),
+     * bounded so the Dashboard can bucket them client-side in the user's local timezone.
+     */
+    @Transactional(readOnly = true)
+    public List<EnergyLogResponseDto> getLogsInRange(String userId, Integer days) {
+        int windowDays = days == null ? DEFAULT_RANGE_DAYS : Math.min(Math.max(1, days), MAX_RANGE_DAYS);
+        Instant to = Instant.now();
+        Instant from = to.minus(windowDays, ChronoUnit.DAYS);
+        return energyLogRepository.findByUserIdAndLoggedAtBetweenOrderByLoggedAtAsc(userId, from, to)
+                .stream()
+                .map(energyLogConverter::toResponseDto)
+                .toList();
     }
 
     public EnergyLogResponseDto createLog(String userId, EnergyLogRequestDto requestDto) {

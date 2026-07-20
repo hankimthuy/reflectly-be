@@ -19,6 +19,7 @@ public class EntryResponseDto {
     private String title;
     private String reflection;
     private List<String> emotions;
+    private String templateKey;
     private Instant createdAt;
     private Instant updatedAt;
 }

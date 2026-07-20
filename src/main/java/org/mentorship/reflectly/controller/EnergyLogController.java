@@ -9,6 +9,8 @@ import org.mentorship.reflectly.service.EnergyLogService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+
+import java.util.List;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 
@@ -62,6 +64,20 @@ public class EnergyLogController {
                 pageResult.getTotalElements(),
                 nextLink
         ));
+    }
+
+    @Operation(summary = "Get energy logs in range", description = "Get raw energy-log points for the last N days (default 30), oldest first, for dashboard trend aggregation")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Energy logs retrieved successfully"),
+            @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
+    })
+    @GetMapping("/range")
+    public ResponseEntity<List<EnergyLogResponseDto>> getLogsInRange(
+            @Parameter(description = "Number of days back from now (default 30, max 366)") @RequestParam(required = false) Integer days,
+            GoogleAuthenticationToken authentication) {
+
+        String userId = getUserIdFromAuthentication(authentication);
+        return ResponseEntity.ok(energyLogService.getLogsInRange(userId, days));
     }
 
     @Operation(summary = "Log energy level", description = "Create a new energy log entry for the current user")
