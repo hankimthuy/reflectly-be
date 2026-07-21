@@ -6,20 +6,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EntryResponseDto {
+public class ActionProtocolResponseDto {
 
     private String id;
     private String userId;
     private String title;
-    private String reflection;
-    private List<String> emotions;
-    private String templateKey;
+    private String trigger;
+    private String script;
+    private Integer usageCount;
+    private Instant lastUsedAt;
     private Instant createdAt;
     private Instant updatedAt;
 }

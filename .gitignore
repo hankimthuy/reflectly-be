@@ -34,3 +34,10 @@ build/
 
 ### Environment Variables ###
 .env
+
+### Local runtime logs & agent scratch ###
+be_*.log
+*_err.log
+*_stderr*.log
+*_stdout*.log
+.claude/

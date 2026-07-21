@@ -6,20 +6,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.List;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class EntryResponseDto {
+public class EnergyLogResponseDto {
 
     private String id;
     private String userId;
-    private String title;
-    private String reflection;
-    private List<String> emotions;
-    private String templateKey;
+    private Integer level;
+    private String contextTag;
+    private String notes;
+    private Instant loggedAt;
     private Instant createdAt;
-    private Instant updatedAt;
 }

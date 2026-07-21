@@ -22,6 +22,7 @@ public class EntryConverter {
                 .title(entity.getTitle())
                 .reflection(entity.getReflection())
                 .emotions(entity.getEmotions())
+                .templateKey(entity.getTemplateKey())
                 .createdAt(entity.getCreatedDate())
                 .updatedAt(entity.getLastModifiedDate())
                 .build();
@@ -31,13 +32,15 @@ public class EntryConverter {
         if (requestDto == null) {
             return null;
         }
-        return new EntryEntity(
+        EntryEntity entity = new EntryEntity(
                 id,
                 userId,
                 requestDto.getTitle(),
                 requestDto.getReflection(),
                 requestDto.getEmotions()
         );
+        entity.setTemplateKey(requestDto.getTemplateKey());
+        return entity;
     }
 
     public List<EntryResponseDto> toResponseDtoList(List<EntryEntity> entities) {
@@ -63,6 +66,7 @@ public class EntryConverter {
         entity.setTitle(requestDto.getTitle());
         entity.setReflection(requestDto.getReflection());
         entity.setEmotions(requestDto.getEmotions());
+        entity.setTemplateKey(requestDto.getTemplateKey());
     }
 }
 
