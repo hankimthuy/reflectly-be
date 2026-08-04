@@ -110,6 +110,31 @@
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.8.13</version>
         </dependency>
+
+        <!-- Google Gemini API client (Coach Agent + Memory Extraction) -->
+        <dependency>
+            <groupId>com.google.genai</groupId>
+            <artifactId>google-genai</artifactId>
+            <version>1.51.0</version>
+        </dependency>
+        <!--
+          google-genai-1.51.0.jar bundles a stray META-INF/services entry advertising
+          com.fasterxml.jackson.module.kotlin.KotlinModule as a Jackson module provider, without
+          actually shipping jackson-module-kotlin. Hibernate's default JSON format mapper does an
+          eager ServiceLoader scan of ALL Jackson modules on the classpath at startup and throws
+          ServiceConfigurationError the moment one advertised provider class can't be loaded — so
+          the real fix is just supplying what's being asked for, not working around it.
+        -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-kotlin</artifactId>
+            <version>2.19.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-reflect</artifactId>
+            <version>1.9.25</version>
+        </dependency>
     </dependencies>
 
     <build>

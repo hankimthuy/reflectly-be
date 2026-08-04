@@ -1,4 +1,4 @@
-# Reflectly / MimoSe Backend
+# MimoSe Backend
 
 > **"Leading Self"** — Spring Boot REST API for the MimoSe personal journal application.
 

@@ -156,7 +156,22 @@ public class UserService {
                 entity.getUsername(),
                 entity.getFullName(),
                 entity.getPictureUrl(),
-                entity.getPasswordHash() != null
+                entity.getPasswordHash() != null,
+                entity.getCoreValues(),
+                entity.isOnboardingCompleted()
         );
+    }
+
+    /**
+     * Persist the user's core values (chosen during Onboarding step 1) and mark onboarding
+     * complete. Onboarding step 2 (adding people) is handled separately via PersonService —
+     * this only flips the gate so ProtectedRoute stops redirecting to /onboarding.
+     */
+    @Transactional
+    public UserEntity completeOnboarding(java.util.List<String> coreValues) {
+        UserEntity user = getCurrentUserEntity();
+        user.setCoreValues(new java.util.ArrayList<>(coreValues));
+        user.setOnboardingCompleted(true);
+        return userRepository.save(user);
     }
 }

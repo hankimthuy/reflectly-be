@@ -30,3 +30,9 @@ app:
     client-secret: ${GOOGLE_CLIENT_SECRET:YOUR_CLIENT_SECRET_HERE}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:8080}
+  gemini:
+    api-key: ${GEMINI_API_KEY:}
+  encryption:
+    key: ${ENCRYPTION_KEY:}
+  conversations:
+    purge-after-extraction: ${PURGE_TRANSCRIPTS:true}

@@ -3,15 +3,17 @@ version: '3.8'
 # This file defines the services for your application.
 services:
   postgres:
-    # Use the same image as in your original command.
-    image: postgres:13
+    # pgvector-enabled image (needed for future semantic memory search on
+    # Insight/RelationshipEvent embeddings). Same Postgres major version (16)
+    # family as before, just with the `vector` extension available.
+    image: pgvector/pgvector:pg16
 
     # Give the container a custom name for easy identification.
     container_name: reflectly-postgres
 
-    # Map the container port to the host port.
+    # Host 5433 — avoids clash with other local stacks on 5432 (e.g. web-cms).
     ports:
-      - "5432:5432"
+      - "5433:5432"
 
     # Set environment variables for the PostgreSQL database.
     environment:
@@ -23,6 +25,8 @@ services:
     # when the container is stopped or removed.
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Runs once on first init of an empty data volume — creates the vector extension.
+      - ./db/init:/docker-entrypoint-initdb.d
 
 # Define the named volumes used by the services.
 volumes:
