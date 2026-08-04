@@ -24,4 +24,7 @@ public class EntryRequestDto {
 
     @NotEmpty(message = "At least one emotion is required")
     private List<String> emotions;
+
+    @Size(max = 50, message = "Template key must not exceed 50 characters")
+    private String templateKey;
 }

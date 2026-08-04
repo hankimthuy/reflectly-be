@@ -42,6 +42,10 @@ public class EntryEntity extends AuditableEntity {
     @Column(name = "emotion", length = 50)
     private List<String> emotions = new ArrayList<>();
 
+    /** Optional key of the guided template used to write this entry (Entry Templates feature). Null for freeform entries. */
+    @Column(name = "template_key", length = 50)
+    private String templateKey;
+
     // Constructor for creating new entries
     public EntryEntity(String id, String userId, String title, String reflection, List<String> emotions) {
         this.id = Objects.requireNonNull(id, "ID cannot be null");

@@ -19,6 +19,6 @@ public class AuditorAwareConfig implements AuditorAware<String> {
         if (authentication == null || !authentication.isAuthenticated()) {
             return Optional.of("admin");
         }
-        return Optional.of(authentication.getName()); 
+        return Optional.ofNullable(authentication.getName()).or(() -> Optional.of("admin"));
     }
 }
