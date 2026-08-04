@@ -8,9 +8,12 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.constants.ApiConstants;
 import org.mentorship.reflectly.dto.ChangePasswordRequestDto;
+import org.mentorship.reflectly.dto.OnboardingRequestDto;
 import org.mentorship.reflectly.dto.UpdateProfileRequestDto;
 import org.mentorship.reflectly.dto.UserProfileRecord;
 import org.mentorship.reflectly.model.UserEntity;
+import org.mentorship.reflectly.security.GoogleAuthenticationToken;
+import org.mentorship.reflectly.service.PersonService;
 import org.mentorship.reflectly.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +32,7 @@ import java.util.UUID;
 public class UserController {
 
     private final UserService userService;
+    private final PersonService personService;
 
     @Operation(
         summary = "Get user profile", 
@@ -110,6 +114,25 @@ public class UserController {
         // Store relative URL path
         String avatarUrl = "/uploads/avatars/" + filename;
         UserEntity updated = userService.updateAvatar(avatarUrl);
+        return ResponseEntity.ok(userService.toProfileRecord(updated));
+    }
+
+    @Operation(
+        summary = "Complete onboarding",
+        description = "Persist the user's core values and initial relationships (3-5 people), marking onboarding as complete"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Onboarding completed successfully"),
+        @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Validation failed"),
+        @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Not authenticated")
+    })
+    @PutMapping("/onboarding")
+    public ResponseEntity<UserProfileRecord> completeOnboarding(
+            @Valid @RequestBody OnboardingRequestDto request,
+            GoogleAuthenticationToken authentication) {
+        Long userId = authentication.getUser().getId();
+        request.getPeople().forEach(person -> personService.createPerson(userId, person));
+        UserEntity updated = userService.completeOnboarding(request.getCoreValues());
         return ResponseEntity.ok(userService.toProfileRecord(updated));
     }
 
