@@ -1,6 +1,7 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
+# =============================================================================
+# Deploy Backend (Spring Boot) -> Azure Web App "ReflectlyBE"
+# Chạy khi: push vào main, hoặc bấm tay (workflow_dispatch) trong tab Actions.
+# =============================================================================
 name: Build and deploy JAR app to Azure Web App - ReflectlyBE
 
 on:
@@ -9,88 +10,180 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  AZURE_WEBAPP_NAME: ReflectlyBE
+  JAVA_VERSION: '21'
+
 jobs:
+  # ---------------------------------------------------------------------------
+  # JOB 0 — Kiểm tra secrets TRƯỚC KHI build.
+  # Mục đích: nếu thiếu secret thì fail ngay ở đây với thông báo rõ ràng,
+  # thay vì build 5 phút rồi app chết im lặng trên Azure và không biết vì sao.
+  # ---------------------------------------------------------------------------
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kiểm tra các GitHub Secrets bắt buộc
+        env:
+          # Đưa secret vào biến môi trường trước, KHÔNG nội suy thẳng vào lệnh shell.
+          # Nếu nội suy thẳng, secret chứa dấu nháy/xuống dòng sẽ làm hỏng cú pháp script.
+          S_AZ_CLIENT: ${{ secrets.AZUREAPPSERVICE_CLIENTID_32988B2886BF422786EE96040795E207 }}
+          S_AZ_TENANT: ${{ secrets.AZUREAPPSERVICE_TENANTID_A7ADFBDF73F749B8A13BEB83DE55DB8C }}
+          S_AZ_SUB:    ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_81FCFEE9783C45498202849A2773ED5E }}
+          S_DB_URL:    ${{ secrets.DB_URL }}
+          S_DB_USER:   ${{ secrets.DB_USERNAME }}
+          S_DB_PASS:   ${{ secrets.DB_PASSWORD }}
+          S_JWT:       ${{ secrets.JWT_SECRET }}
+          S_G_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
+          S_G_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          S_GEMINI:    ${{ secrets.GEMINI_API_KEY }}
+          S_ENC:       ${{ secrets.ENCRYPTION_KEY }}
+          S_CORS:      ${{ secrets.APP_CORS_ALLOWED_ORIGINS }}
+        run: |
+          MISSING=""
+
+          # Dùng if/fi thay cho "test && gán".
+          # Lý do: GitHub Actions chạy bash với -e; một dòng "test ... && ..."
+          # khi test SAI sẽ trả mã 1 và làm cả step thoát ngay lập tức.
+          need() {
+            if [ -z "$2" ]; then
+              MISSING="${MISSING}
+            - $1"
+            fi
+          }
+
+          need "AZUREAPPSERVICE_CLIENTID_..."       "$S_AZ_CLIENT"
+          need "AZUREAPPSERVICE_TENANTID_..."       "$S_AZ_TENANT"
+          need "AZUREAPPSERVICE_SUBSCRIPTIONID_..." "$S_AZ_SUB"
+          need "DB_URL"                             "$S_DB_URL"
+          need "DB_USERNAME"                        "$S_DB_USER"
+          need "DB_PASSWORD"                        "$S_DB_PASS"
+          need "JWT_SECRET"                         "$S_JWT"
+          need "GOOGLE_CLIENT_ID"                   "$S_G_ID"
+          need "GOOGLE_CLIENT_SECRET"               "$S_G_SECRET"
+          need "GEMINI_API_KEY"                     "$S_GEMINI"
+          need "ENCRYPTION_KEY"                     "$S_ENC"
+          need "APP_CORS_ALLOWED_ORIGINS"           "$S_CORS"
+
+          if [ -n "$MISSING" ]; then
+            echo "Thiếu các GitHub Secrets sau:"
+            echo "$MISSING"
+            echo "Khai báo tại: repo -> Settings -> Secrets and variables -> Actions -> New repository secret"
+            echo "::error::Thiếu GitHub Secrets bắt buộc — xem danh sách ở log phía trên."
+            exit 1
+          fi
+          echo "Đủ secrets, tiếp tục build."
+
+  # ---------------------------------------------------------------------------
+  # JOB 1 — Build file .jar
+  # ---------------------------------------------------------------------------
   build:
     runs-on: ubuntu-latest
+    needs: preflight
     permissions:
-      contents: read #This is required for actions/checkout
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Java version
+      - name: Cài Java ${{ env.JAVA_VERSION }}
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: ${{ env.JAVA_VERSION }}
           distribution: 'microsoft'
+          cache: maven
 
-      - name: Build with Maven
-        run: mvn clean install
+      # `package` thay cho `install`: không cần đẩy vào local repo, nhanh hơn.
+      # `-DskipTests`: test đã chạy riêng ở ci.yml trên pull request rồi.
+      - name: Build với Maven
+        run: mvn -B clean package -DskipTests
 
-      - name: Upload artifact for deployment job
+      # Spring Boot tạo 2 file trong target/: bản fat jar (chạy được) và
+      # bản *.jar.original (không chạy được). Chỉ lấy đúng fat jar.
+      - name: Gom đúng 1 file jar để deploy
+        run: |
+          mkdir -p staging
+          cp target/*.jar staging/app.jar
+          ls -lh staging/
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: java-app
-          path: '${{ github.workspace }}/target/*.jar'
+          path: staging/app.jar
 
+  # ---------------------------------------------------------------------------
+  # JOB 2 — Nạp cấu hình vào Azure rồi deploy
+  # ---------------------------------------------------------------------------
   deploy:
     runs-on: ubuntu-latest
     needs: build
     permissions:
-      id-token: write #This is required for requesting the JWT
-      contents: read #This is required for actions/checkout
-  
+      id-token: write
+      contents: read
+
     steps:
-      - name: Download artifact from build job
+      - name: Tải artifact từ job build
         uses: actions/download-artifact@v4
         with:
           name: java-app
-      
-      - name: Login to Azure
+
+      - name: Đăng nhập Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_32988B2886BF422786EE96040795E207 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_A7ADFBDF73F749B8A13BEB83DE55DB8C }}
+          client-id:       ${{ secrets.AZUREAPPSERVICE_CLIENTID_32988B2886BF422786EE96040795E207 }}
+          tenant-id:       ${{ secrets.AZUREAPPSERVICE_TENANTID_A7ADFBDF73F749B8A13BEB83DE55DB8C }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_81FCFEE9783C45498202849A2773ED5E }}
 
-      - name: Configure App Settings for DB
+      # App Settings = "biến môi trường" của Web App trên Azure.
+      # Code đọc chúng qua ${DB_URL}, ${JWT_SECRET}... trong application.yml.
+      - name: Nạp App Settings cho Azure Web App
         uses: azure/appservice-settings@v1
         with:
-          app-name: 'ReflectlyBE'
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
           app-settings-json: |
             [
-              { "name": "DB_URL", "value": "${{ secrets.DB_URL }}", "slotSetting": false },
-              { "name": "DB_USERNAME", "value": "${{ secrets.DB_USERNAME }}", "slotSetting": false },
-              { "name": "DB_PASSWORD", "value": "${{ secrets.DB_PASSWORD }}", "slotSetting": false },
-              { "name": "JWT_SECRET", "value": "${{ secrets.JWT_SECRET }}", "slotSetting": false },
-              { "name": "GOOGLE_CLIENT_ID", "value": "${{ secrets.GOOGLE_CLIENT_ID }}", "slotSetting": false },
-              { "name": "GOOGLE_CLIENT_SECRET", "value": "${{ secrets.GOOGLE_CLIENT_SECRET }}", "slotSetting": false },
-              { "name": "SPRING_PROFILES_ACTIVE", "value": "prod", "slotSetting": false },
-              { "name": "APP_CORS_ALLOWED_ORIGINS", "value": "${{ secrets.APP_CORS_ALLOWED_ORIGINS }}", "slotSetting": false }
+              { "name": "DB_URL",                   "value": "${{ secrets.DB_URL }}",               "slotSetting": false },
+              { "name": "DB_USERNAME",              "value": "${{ secrets.DB_USERNAME }}",          "slotSetting": false },
+              { "name": "DB_PASSWORD",              "value": "${{ secrets.DB_PASSWORD }}",          "slotSetting": false },
+              { "name": "JWT_SECRET",               "value": "${{ secrets.JWT_SECRET }}",           "slotSetting": false },
+              { "name": "GOOGLE_CLIENT_ID",         "value": "${{ secrets.GOOGLE_CLIENT_ID }}",     "slotSetting": false },
+              { "name": "GOOGLE_CLIENT_SECRET",     "value": "${{ secrets.GOOGLE_CLIENT_SECRET }}", "slotSetting": false },
+              { "name": "GEMINI_API_KEY",           "value": "${{ secrets.GEMINI_API_KEY }}",       "slotSetting": false },
+              { "name": "ENCRYPTION_KEY",           "value": "${{ secrets.ENCRYPTION_KEY }}",       "slotSetting": false },
+              { "name": "APP_CORS_ALLOWED_ORIGINS", "value": "${{ secrets.APP_CORS_ALLOWED_ORIGINS }}", "slotSetting": false },
+              { "name": "SPRING_PROFILES_ACTIVE",   "value": "prod",  "slotSetting": false }
             ]
+          # Cố ý KHÔNG đặt WEBSITES_PORT. application-prod.yml đã dùng
+          # server.port: ${PORT:8080} — Azure Java SE tự truyền PORT vào.
+          # Đặt thêm WEBSITES_PORT lệch giá trị sẽ làm Azure route sai cổng.
 
-      - name: Deploy to Azure Web App
+      - name: Deploy lên Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'ReflectlyBE'
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           slot-name: 'Production'
-          package: '*.jar'
+          package: 'app.jar'
 
-      - name: Health check
-        continue-on-error: true
+      # Health check KHÔNG dùng continue-on-error nữa.
+      # Trước đây lỗi bị nuốt -> workflow xanh nhưng app chết. Giờ nó phải đỏ.
+      - name: Health check (app có thật sự sống không)
         env:
           HEALTH_URL: ${{ secrets.BE_HEALTH_URL }}
         run: |
           URL="${HEALTH_URL:-https://reflectlybe-dgcnc3fxdkb0eccc.eastasia-01.azurewebsites.net}"
-          for i in {1..12}; do
+          echo "Đang gọi $URL/actuator/health ..."
+          for i in $(seq 1 20); do
             if curl -sf "$URL/actuator/health"; then
-              echo "Backend health check passed"
+              echo ""
+              echo "Backend sống. Deploy thành công."
               exit 0
             fi
-            echo "Waiting for backend to become healthy... ($i/12)"
-            sleep 10
+            echo "Chờ app khởi động... ($i/20)"
+            sleep 15
           done
-          echo "::warning::Backend health check failed. Verify GitHub secrets: JWT_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, DB_*"
+          echo "::error::Backend KHÔNG lên sau 5 phút. Đây gần như luôn là lỗi kết nối DB hoặc schema."
+          echo "::error::Cách xem log thật: Azure Portal -> App Service ReflectlyBE -> Log stream. Tìm dòng 'Schema-validation' hoặc 'Connection refused'."
           exit 1
