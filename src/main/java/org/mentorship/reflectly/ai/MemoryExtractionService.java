@@ -91,7 +91,9 @@ public class MemoryExtractionService {
                 - events: các sự kiện/tương tác liên quan đến từng người ở trên, có tóm tắt ngắn gọn và \
                 điểm cảm xúc (-1 tiêu cực đến 1 tích cực).
                 - insights: nhận định ngắn gọn về giá trị cốt lõi, mẫu hành vi, hoặc mối quan hệ mà Người dùng \
-                bộc lộ qua cuộc trò chuyện — không suy diễn quá xa những gì thực sự được nói.
+                bộc lộ qua cuộc trò chuyện — không suy diễn quá xa những gì thực sự được nói. Nếu insight \
+                gắn liền với một người cụ thể đã liệt kê ở "people" (thường là loại RELATIONSHIP), điền tên \
+                người đó vào personName; nếu không, để personName là null.
                 Nếu không có thông tin phù hợp cho một mục, trả về mảng rỗng cho mục đó. Chỉ trích xuất những \
                 gì thực sự xuất hiện trong hội thoại, không bịa thêm.
 
@@ -143,7 +145,8 @@ public class MemoryExtractionService {
                 .properties(Map.of(
                         "insightText", Schema.builder().type(Type.Known.STRING).build(),
                         "category", Schema.builder().type(Type.Known.STRING)
-                                .enum_("VALUE", "BEHAVIOR_PATTERN", "RELATIONSHIP").build()))
+                                .enum_("VALUE", "BEHAVIOR_PATTERN", "RELATIONSHIP").build(),
+                        "personName", Schema.builder().type(Type.Known.STRING).build()))
                 .required("insightText", "category")
                 .build();
 

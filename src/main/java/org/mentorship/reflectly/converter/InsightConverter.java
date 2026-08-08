@@ -14,6 +14,8 @@ public class InsightConverter {
                 .insightText(entity.getInsightText())
                 .category(entity.getCategory())
                 .createdAt(entity.getCreatedDate())
+                .personId(entity.getPerson() != null ? entity.getPerson().getId() : null)
+                .personName(entity.getPerson() != null ? entity.getPerson().getName() : null)
                 .build();
     }
 

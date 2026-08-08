@@ -16,6 +16,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -27,7 +28,7 @@ public class InsightController {
 
     private final InsightService insightService;
 
-    @Operation(summary = "List insights", description = "Get the current user's insight timeline, paginated, newest first")
+    @Operation(summary = "List insights", description = "Get the current user's insight timeline, paginated, newest first, optionally filtered to one person")
     @ApiResponses(value = {
             @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Insights retrieved successfully"),
             @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
@@ -35,9 +36,10 @@ public class InsightController {
     @GetMapping
     public ResponseEntity<PagedResponseDto<InsightResponseDto>> getAllInsights(
             GoogleAuthenticationToken authentication,
+            @RequestParam(required = false) String personId,
             @ParameterObject Pageable pageable) {
         Long userId = getUserIdFromAuthentication(authentication);
-        Page<InsightResponseDto> pageResult = insightService.getAllInsights(userId, pageable);
+        Page<InsightResponseDto> pageResult = insightService.getAllInsights(userId, personId, pageable);
 
         String nextLink = null;
         if (pageResult.hasNext()) {

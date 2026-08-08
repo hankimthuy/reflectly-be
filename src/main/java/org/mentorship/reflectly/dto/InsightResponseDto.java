@@ -17,4 +17,8 @@ public class InsightResponseDto {
     private String insightText;
     private InsightCategory category;
     private Instant createdAt;
+
+    /** Which person (relationship map) this insight is about, if known. Null otherwise. */
+    private String personId;
+    private String personName;
 }

@@ -26,6 +26,13 @@ public class InsightEntity extends AuditableEntity {
     @JoinColumn(name = "conversation_id")
     private ConversationEntity conversation;
 
+    /** Which person (relationship map) this insight is about, if the extraction could tell —
+     * links "Thấu hiểu"'s insight timeline to the relationship map (Phase 2). Nullable: not every
+     * insight is about a specific person (e.g. VALUE-category insights usually aren't). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "person_id")
+    private PersonEntity person;
+
     @Column(name = "insight_text", nullable = false, columnDefinition = "TEXT")
     private String insightText;
 
@@ -38,6 +45,16 @@ public class InsightEntity extends AuditableEntity {
         this.id = id;
         this.user = user;
         this.conversation = conversation;
+        this.insightText = insightText;
+        this.category = category;
+    }
+
+    public InsightEntity(String id, UserEntity user, ConversationEntity conversation, PersonEntity person,
+                          String insightText, InsightCategory category) {
+        this.id = id;
+        this.user = user;
+        this.conversation = conversation;
+        this.person = person;
         this.insightText = insightText;
         this.category = category;
     }

@@ -19,4 +19,7 @@ public class ConversationResponseDto {
     private Instant startedAt;
     private Instant endedAt;
     private List<ConversationMessageResponseDto> messages;
+
+    /** AI-generated markdown recap, null until requested via POST /{id}/summarize. */
+    private String summary;
 }

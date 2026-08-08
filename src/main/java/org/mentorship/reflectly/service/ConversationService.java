@@ -3,6 +3,7 @@ package org.mentorship.reflectly.service;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.ai.CoachAgentService;
 import org.mentorship.reflectly.ai.ConversationEndedEvent;
+import org.mentorship.reflectly.ai.ConversationSummaryService;
 import org.mentorship.reflectly.converter.ConversationConverter;
 import org.mentorship.reflectly.dto.ConversationMessageResponseDto;
 import org.mentorship.reflectly.dto.ConversationResponseDto;
@@ -31,6 +32,7 @@ public class ConversationService {
     private final UserRepository userRepository;
     private final ConversationConverter conversationConverter;
     private final CoachAgentService coachAgentService;
+    private final ConversationSummaryService conversationSummaryService;
     private final ApplicationEventPublisher eventPublisher;
 
     public ConversationResponseDto startConversation(Long userId) {
@@ -96,6 +98,22 @@ public class ConversationService {
         }
         List<ConversationMessageEntity> messages =
                 conversationMessageRepository.findByConversationIdOrderByCreatedDateAsc(conversationId);
+        return conversationConverter.toResponseDto(conversation, messages);
+    }
+
+    /**
+     * Generates (and persists) a human-readable markdown recap of the conversation so far.
+     * Callable any time — while ACTIVE or after ENDED — and safe to call again to regenerate.
+     */
+    public ConversationResponseDto summarizeConversation(Long userId, String conversationId) {
+        ConversationEntity conversation = findOwnedConversation(userId, conversationId);
+        List<ConversationMessageEntity> messages =
+                conversationMessageRepository.findByConversationIdOrderByCreatedDateAsc(conversationId);
+
+        String summary = conversationSummaryService.summarize(messages);
+        conversation.setSummary(summary);
+        conversationRepository.save(conversation);
+
         return conversationConverter.toResponseDto(conversation, messages);
     }
 
