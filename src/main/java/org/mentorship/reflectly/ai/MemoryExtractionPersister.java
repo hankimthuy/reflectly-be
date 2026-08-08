@@ -103,8 +103,13 @@ class MemoryExtractionPersister {
                 if (extracted.getInsightText() == null || extracted.getInsightText().isBlank()) {
                     continue;
                 }
+                // Only link to a person the model also listed in `people` for this same
+                // extraction — same "don't guess" rule as events above.
+                PersonEntity person = extracted.getPersonName() == null
+                        ? null
+                        : peopleByName.get(extracted.getPersonName().toLowerCase());
                 InsightEntity insight = new InsightEntity(
-                        UUID.randomUUID().toString(), user, conversation,
+                        UUID.randomUUID().toString(), user, conversation, person,
                         extracted.getInsightText(),
                         parseEnum(InsightCategory.class, extracted.getCategory(), InsightCategory.BEHAVIOR_PATTERN));
                 insightRepository.save(insight);

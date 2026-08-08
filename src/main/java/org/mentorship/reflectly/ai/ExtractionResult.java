@@ -49,5 +49,9 @@ public class ExtractionResult {
         private String insightText;
         /** One of InsightCategory enum names (VALUE, BEHAVIOR_PATTERN, RELATIONSHIP). */
         private String category;
+        /** Optional — must match a name in `people` for this same extraction if the insight is
+         * specifically about that person (typically for RELATIONSHIP-category insights). Null
+         * when the insight is about the user generally (e.g. most VALUE insights). */
+        private String personName;
     }
 }

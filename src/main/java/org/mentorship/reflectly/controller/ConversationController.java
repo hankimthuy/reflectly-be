@@ -113,6 +113,20 @@ public class ConversationController {
         return ResponseEntity.ok(conversationService.endConversation(userId, id));
     }
 
+    @Operation(summary = "Summarize a conversation", description = "Generates (and persists) a markdown recap of the conversation so far; callable any time, safe to re-call to regenerate")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Summary generated successfully"),
+            @ApiResponse(responseCode = ApiConstants.NOT_FOUND, description = "Conversation not found"),
+            @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
+    })
+    @PostMapping("/{id}/summarize")
+    public ResponseEntity<ConversationResponseDto> summarizeConversation(
+            @Parameter(description = "Conversation ID") @PathVariable String id,
+            GoogleAuthenticationToken authentication) {
+        Long userId = getUserIdFromAuthentication(authentication);
+        return ResponseEntity.ok(conversationService.summarizeConversation(userId, id));
+    }
+
     private Long getUserIdFromAuthentication(GoogleAuthenticationToken authentication) {
         if (authentication != null && authentication.getUser() != null) {
             return authentication.getUser().getId();

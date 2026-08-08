@@ -27,6 +27,7 @@ public class ConversationConverter {
                 .startedAt(entity.getStartedAt())
                 .endedAt(entity.getEndedAt())
                 .messages(messages.stream().map(this::toMessageResponseDto).toList())
+                .summary(entity.getSummary())
                 .build();
     }
 }

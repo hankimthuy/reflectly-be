@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface InsightRepository extends JpaRepository<InsightEntity, String> {
 
     Page<InsightEntity> findByUserIdOrderByCreatedDateDesc(Long userId, Pageable pageable);
+
+    Page<InsightEntity> findByUserIdAndPersonIdOrderByCreatedDateDesc(Long userId, String personId, Pageable pageable);
 }

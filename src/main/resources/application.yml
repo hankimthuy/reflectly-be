@@ -35,4 +35,4 @@ app:
   encryption:
     key: ${ENCRYPTION_KEY:}
   conversations:
-    purge-after-extraction: ${PURGE_TRANSCRIPTS:true}
+    purge-after-extraction: ${PURGE_TRANSCRIPTS:false}

@@ -34,6 +34,16 @@ public class ConversationEntity extends AuditableEntity {
     @Column(name = "ended_at")
     private Instant endedAt;
 
+    /**
+     * AI-generated human-readable recap of the conversation (Vietnamese, markdown-formatted),
+     * generated on demand via {@code POST /api/conversations/{id}/summarize} — not tied to
+     * ending the session, and re-generatable. Encrypted at rest like message content, since it
+     * can restate personal details from the conversation.
+     */
+    @Convert(converter = org.mentorship.reflectly.converter.EncryptedStringConverter.class)
+    @Column(columnDefinition = "TEXT")
+    private String summary;
+
     public ConversationEntity(String id, UserEntity user) {
         this.id = id;
         this.user = user;
