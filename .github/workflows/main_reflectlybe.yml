@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: ReflectlyBE
+  AZURE_WEBAPP_NAME: ReflectlyBE-sea
   JAVA_VERSION: '21'
 
 jobs:
@@ -27,9 +27,9 @@ jobs:
         env:
           # Đưa secret vào biến môi trường trước, KHÔNG nội suy thẳng vào lệnh shell.
           # Nếu nội suy thẳng, secret chứa dấu nháy/xuống dòng sẽ làm hỏng cú pháp script.
-          S_AZ_CLIENT: ${{ secrets.AZUREAPPSERVICE_CLIENTID_32988B2886BF422786EE96040795E207 }}
-          S_AZ_TENANT: ${{ secrets.AZUREAPPSERVICE_TENANTID_A7ADFBDF73F749B8A13BEB83DE55DB8C }}
-          S_AZ_SUB:    ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_81FCFEE9783C45498202849A2773ED5E }}
+          S_AZ_CLIENT: ${{ secrets.AZUREAPPSERVICE_CLIENTID_159A59B6905D40EBB32147F5D6AEFC97 }}
+          S_AZ_TENANT: ${{ secrets.AZUREAPPSERVICE_TENANTID_A0F837901B5B414DAA0765CD3F0F859A }}
+          S_AZ_SUB:    ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2E5290F80FD94A1FA79E13B09B15E541 }}
           S_DB_URL:    ${{ secrets.DB_URL }}
           S_DB_USER:   ${{ secrets.DB_USERNAME }}
           S_DB_PASS:   ${{ secrets.DB_PASSWORD }}
@@ -131,9 +131,9 @@ jobs:
       - name: Đăng nhập Azure
         uses: azure/login@v2
         with:
-          client-id:       ${{ secrets.AZUREAPPSERVICE_CLIENTID_32988B2886BF422786EE96040795E207 }}
-          tenant-id:       ${{ secrets.AZUREAPPSERVICE_TENANTID_A7ADFBDF73F749B8A13BEB83DE55DB8C }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_81FCFEE9783C45498202849A2773ED5E }}
+          client-id:       ${{ secrets.AZUREAPPSERVICE_CLIENTID_159A59B6905D40EBB32147F5D6AEFC97 }}
+          tenant-id:       ${{ secrets.AZUREAPPSERVICE_TENANTID_A0F837901B5B414DAA0765CD3F0F859A }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_2E5290F80FD94A1FA79E13B09B15E541 }}
 
       # App Settings = "biến môi trường" của Web App trên Azure.
       # Code đọc chúng qua ${DB_URL}, ${JWT_SECRET}... trong application.yml.
@@ -173,7 +173,7 @@ jobs:
         env:
           HEALTH_URL: ${{ secrets.BE_HEALTH_URL }}
         run: |
-          URL="${HEALTH_URL:-https://reflectlybe-dgcnc3fxdkb0eccc.eastasia-01.azurewebsites.net}"
+          URL="${HEALTH_URL:-https://reflectlybe-sea-bkaygkhzgzd7akfd.southeastasia-01.azurewebsites.net}"
           echo "Đang gọi $URL/actuator/health ..."
           for i in $(seq 1 20); do
             if curl -sf "$URL/actuator/health"; then
@@ -185,5 +185,5 @@ jobs:
             sleep 15
           done
           echo "::error::Backend KHÔNG lên sau 5 phút. Đây gần như luôn là lỗi kết nối DB hoặc schema."
-          echo "::error::Cách xem log thật: Azure Portal -> App Service ReflectlyBE -> Log stream. Tìm dòng 'Schema-validation' hoặc 'Connection refused'."
+          echo "::error::Cách xem log thật: Azure Portal -> App Service ReflectlyBE-sea -> Log stream. Tìm dòng 'Schema-validation' hoặc 'Connection refused'."
           exit 1
