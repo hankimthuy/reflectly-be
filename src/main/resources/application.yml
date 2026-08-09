@@ -36,3 +36,13 @@ app:
     key: ${ENCRYPTION_KEY:}
   conversations:
     purge-after-extraction: ${PURGE_TRANSCRIPTS:false}
+  auth:
+    # Username/password login+signup — kept ON by default for local/dev testing.
+    local-credentials-enabled: ${LOCAL_AUTH_ENABLED:true}
+  quota:
+    # Alpha-phase hard cap on Coach conversations per user, to bound Gemini API spend.
+    # Raise via env var once ready for wider access — no code change needed.
+    max-conversations-per-user: ${MAX_CONVERSATIONS_PER_USER:5}
+  rate-limit:
+    auth-requests-per-minute: ${AUTH_RATE_LIMIT_PER_MINUTE:10}
+    conversation-requests-per-minute: ${CONVERSATION_RATE_LIMIT_PER_MINUTE:10}

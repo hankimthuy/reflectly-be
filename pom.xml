@@ -117,6 +117,13 @@
             <artifactId>google-genai</artifactId>
             <version>1.51.0</version>
         </dependency>
+
+        <!-- In-memory rate limiting (per-IP on auth, per-user on Coach chat) -->
+        <dependency>
+            <groupId>com.bucket4j</groupId>
+            <artifactId>bucket4j_jdk17-core</artifactId>
+            <version>8.19.0</version>
+        </dependency>
         <!--
           google-genai-1.51.0.jar bundles a stray META-INF/services entry advertising
           com.fasterxml.jackson.module.kotlin.KotlinModule as a Jackson module provider, without

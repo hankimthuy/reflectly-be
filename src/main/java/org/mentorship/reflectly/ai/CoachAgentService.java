@@ -6,6 +6,7 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.mentorship.reflectly.constants.AiConstants;
 import org.mentorship.reflectly.model.ConversationMessageEntity;
 import org.mentorship.reflectly.model.MessageRole;
@@ -21,6 +22,7 @@ import java.util.stream.Collectors;
  * concludes or diagnoses for them. Not a therapy/crisis-intervention tool: on distress signals
  * it acknowledges concern and points toward professional support, nothing more.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CoachAgentService {
@@ -82,7 +84,18 @@ public class CoachAgentService {
                 .build();
 
         GenerateContentResponse response = geminiClient.models.generateContent(AiConstants.COACH_MODEL, contents, config);
+        logTokenUsage("coach reply", response);
         return response.text();
+    }
+
+    /** Best-effort spend visibility in Azure logs — no dashboard, just something to grep. */
+    private void logTokenUsage(String callSite, GenerateContentResponse response) {
+        response.usageMetadata().ifPresent(usage -> log.info(
+                "Gemini tokens used ({}): total={}, prompt={}, candidates={}",
+                callSite,
+                usage.totalTokenCount().orElse(null),
+                usage.promptTokenCount().orElse(null),
+                usage.candidatesTokenCount().orElse(null)));
     }
 
     private String buildSystemPrompt(List<String> coreValues) {

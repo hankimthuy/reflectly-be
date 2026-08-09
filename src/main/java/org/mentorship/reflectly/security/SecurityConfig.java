@@ -34,6 +34,7 @@ public class SecurityConfig {
     private final JwtExpirationFilter jwtExpirationFilter;
     private final BackendJwtAuthenticationFilter backendJwtAuthenticationFilter;
     private final PrivateNetworkAccessFilter privateNetworkAccessFilter;
+    private final RateLimitFilter rateLimitFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -51,6 +52,9 @@ public class SecurityConfig {
                         .anyRequest().authenticated())
                 .addFilterBefore(backendJwtAuthenticationFilter, BearerTokenAuthenticationFilter.class)
                 .addFilterAfter(jwtExpirationFilter, BearerTokenAuthenticationFilter.class)
+                // Runs after auth is resolved so it can rate-limit Coach endpoints per-user
+                // rather than always falling back to IP.
+                .addFilterAfter(rateLimitFilter, JwtExpirationFilter.class)
                 .oauth2ResourceServer(configurer -> configurer
                         .bearerTokenResolver(skipIfAlreadyAuthenticated())
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(googleAuthenticationConverter)));

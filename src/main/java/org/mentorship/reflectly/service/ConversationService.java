@@ -8,11 +8,13 @@ import org.mentorship.reflectly.converter.ConversationConverter;
 import org.mentorship.reflectly.dto.ConversationMessageResponseDto;
 import org.mentorship.reflectly.dto.ConversationResponseDto;
 import org.mentorship.reflectly.exception.NotFoundException;
+import org.mentorship.reflectly.exception.QuotaExceededException;
 import org.mentorship.reflectly.exception.ValidationException;
 import org.mentorship.reflectly.model.*;
 import org.mentorship.reflectly.repository.ConversationMessageRepository;
 import org.mentorship.reflectly.repository.ConversationRepository;
 import org.mentorship.reflectly.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -35,9 +37,22 @@ public class ConversationService {
     private final ConversationSummaryService conversationSummaryService;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Alpha-phase hard cap on conversations per user, to bound Gemini API spend before this app
+     * has a real access/billing model. Env-tunable so it can be raised later with no code change.
+     */
+    @Value("${app.quota.max-conversations-per-user:5}")
+    private long maxConversationsPerUser;
+
     public ConversationResponseDto startConversation(Long userId) {
         UserEntity user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+
+        long existingCount = conversationRepository.countByUserId(userId);
+        if (existingCount >= maxConversationsPerUser) {
+            throw new QuotaExceededException(
+                    "Bạn đã dùng hết " + maxConversationsPerUser + " lượt trò chuyện thử nghiệm với Aura.");
+        }
 
         ConversationEntity conversation = new ConversationEntity(UUID.randomUUID().toString(), user);
         conversationRepository.save(conversation);

@@ -6,6 +6,7 @@ import com.google.genai.types.GenerateContentConfig;
 import com.google.genai.types.GenerateContentResponse;
 import com.google.genai.types.Part;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.mentorship.reflectly.constants.AiConstants;
 import org.mentorship.reflectly.model.ConversationMessageEntity;
 import org.mentorship.reflectly.model.MessageRole;
@@ -20,6 +21,7 @@ import java.util.List;
  * the chat UI (e.g. after they ask to "tóm tắt" the session), and to seed the Insight Catcher
  * save flow.
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ConversationSummaryService {
@@ -54,6 +56,12 @@ public class ConversationSummaryService {
                 AiConstants.MEMORY_EXTRACTION_MODEL,
                 Content.builder().role("user").parts(Part.fromText(PROMPT_TEMPLATE.formatted(transcript))).build(),
                 config);
+
+        response.usageMetadata().ifPresent(usage -> log.info(
+                "Gemini tokens used (conversation summary): total={}, prompt={}, candidates={}",
+                usage.totalTokenCount().orElse(null),
+                usage.promptTokenCount().orElse(null),
+                usage.candidatesTokenCount().orElse(null)));
 
         return response.text();
     }
