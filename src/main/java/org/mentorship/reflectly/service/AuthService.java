@@ -9,6 +9,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.dto.AuthLoginResponseDto;
 import org.mentorship.reflectly.dto.UserProfileRecord;
+import org.mentorship.reflectly.exception.LocalAuthDisabledException;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.security.JwtService;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,6 +38,14 @@ public class AuthService {
 
     @Value("${app.google.client-secret}")
     private String clientSecret;
+
+    /**
+     * Kill switch for username/password login and signup — disabled in production so the only
+     * way in is Google login (which carries Google's own bot/abuse resistance upstream), while
+     * staying enabled by default for local/dev testing. See app.auth.local-credentials-enabled.
+     */
+    @Value("${app.auth.local-credentials-enabled:true}")
+    private boolean localCredentialsEnabled;
 
     /**
      * Exchange a Google Auth Code for an ID Token, then verify and issue a backend JWT.
@@ -79,6 +88,7 @@ public class AuthService {
      * Authenticate a user with username and password credentials.
      */
     public AuthLoginResponseDto loginWithCredentials(String username, String password) {
+        requireLocalCredentialsEnabled();
         UserEntity user = userService.authenticateByCredentials(username, password);
         return buildAuthResponse(user);
     }
@@ -87,8 +97,16 @@ public class AuthService {
      * Register a new user with username, password, and optional display name.
      */
     public AuthLoginResponseDto signup(String username, String password, String fullName) {
+        requireLocalCredentialsEnabled();
         UserEntity user = userService.createUser(username, password, fullName);
         return buildAuthResponse(user);
+    }
+
+    private void requireLocalCredentialsEnabled() {
+        if (!localCredentialsEnabled) {
+            throw new LocalAuthDisabledException(
+                    "Đăng ký/đăng nhập bằng username và mật khẩu đã tắt. Vui lòng đăng nhập bằng Google.");
+        }
     }
 
     private AuthLoginResponseDto buildAuthResponse(UserEntity user) {

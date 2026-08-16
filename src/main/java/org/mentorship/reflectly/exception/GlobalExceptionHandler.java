@@ -27,6 +27,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
+    @ExceptionHandler(LocalAuthDisabledException.class)
+    public ResponseEntity<ErrorResponseDto> handleLocalAuthDisabled(LocalAuthDisabledException ex) {
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    @ExceptionHandler(QuotaExceededException.class)
+    public ResponseEntity<ErrorResponseDto> handleQuotaExceeded(QuotaExceededException ex) {
+        ErrorResponseDto error = ErrorResponseDto.builder()
+                .message(ex.getMessage())
+                .build();
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(error);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponseDto> handleValidationExceptions(MethodArgumentNotValidException ex) {
         String message = ex.getBindingResult().getAllErrors().stream()

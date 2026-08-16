@@ -112,6 +112,12 @@ public class MemoryExtractionService {
                 Content.builder().role("user").parts(Part.fromText(prompt)).build(),
                 config);
 
+        response.usageMetadata().ifPresent(usage -> log.info(
+                "Gemini tokens used (memory extraction): total={}, prompt={}, candidates={}",
+                usage.totalTokenCount().orElse(null),
+                usage.promptTokenCount().orElse(null),
+                usage.candidatesTokenCount().orElse(null)));
+
         try {
             return objectMapper.readValue(response.text(), ExtractionResult.class);
         } catch (Exception e) {

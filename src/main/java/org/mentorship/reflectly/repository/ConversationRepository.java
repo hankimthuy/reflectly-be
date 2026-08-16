@@ -14,4 +14,6 @@ public interface ConversationRepository extends JpaRepository<ConversationEntity
     Page<ConversationEntity> findByUserIdOrderByStartedAtDesc(Long userId, Pageable pageable);
 
     Optional<ConversationEntity> findByIdAndUserId(String id, Long userId);
+
+    long countByUserId(Long userId);
 }
