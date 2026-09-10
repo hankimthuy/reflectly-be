@@ -33,12 +33,13 @@ public class PrivateNetworkAccessFilter extends OncePerRequestFilter {
             response.setHeader("Access-Control-Allow-Private-Network", "true");
         }
 
-        // For OPTIONS preflight with PNA, return 200 immediately
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod()) && "true".equalsIgnoreCase(pnaHeader)) {
-            response.setStatus(HttpServletResponse.SC_OK);
-            return;
-        }
-
+        // Do NOT short-circuit here even for an OPTIONS+PNA preflight: this filter runs before
+        // Spring Security's CorsFilter, so returning the response early (as before) skipped it
+        // entirely and left the preflight response missing Access-Control-Allow-Origin/
+        // Allow-Methods/Allow-Headers — the browser then failed the whole preflight and surfaced
+        // it to callers as a generic "Network Error", exactly the bug this filter was meant to
+        // avoid. Just add the PNA header above and let the chain continue so CorsFilter still
+        // completes the real preflight response.
         filterChain.doFilter(request, response);
     }
 }
