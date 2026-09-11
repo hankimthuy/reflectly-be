@@ -20,7 +20,7 @@ Sản phẩm đã trải qua 2 lần pivot (xem chi tiết lịch sử ở `refl
 
 - **Ngôn ngữ:** Java 21.
 - **Framework:** Spring Boot 3.5.6 (Spring Web MVC, Spring Data JPA, Spring Security + OAuth2 Resource Server).
-- **Cơ sở dữ liệu:** PostgreSQL (Neon/Supabase ở production; image `pgvector/pgvector:pg16` ở local — đã cài sẵn extension pgvector cho tính năng tìm kiếm ngữ nghĩa **trong tương lai**, hiện chưa dùng tới).
+- **Cơ sở dữ liệu:** PostgreSQL (Neon ở production; image `pgvector/pgvector:pg16` ở local — đã cài sẵn extension pgvector cho tính năng tìm kiếm ngữ nghĩa **trong tương lai**, hiện chưa dùng tới).
 - **ORM:** Hibernate/Spring Data JPA. **Chưa dùng Flyway** — migration được quản lý thủ công qua các file SQL trong `documentation/migrations/` (đã được ghi chú là việc cần làm trước khi có thay đổi schema tiếp theo).
 - **Xác thực:** JWT tự phát hành (HS256, thư viện `io.jsonwebtoken`), phát sinh từ 2 luồng đăng nhập: Google OAuth2 (auth-code) hoặc tài khoản/mật khẩu (BCrypt).
 - **Tài liệu API:** springdoc-openapi, Swagger UI tại `/swagger-ui.html`.
@@ -52,7 +52,7 @@ Hầu hết các bảng có cột audit chung (`created_date, created_by, last_m
 | **protocol_usages** | Lịch sử dùng 1 action protocol | effectiveness (WORKED/PARTIAL/DIDNT_WORK) |
 | **saved_framework_entries** | "Đúc kết" người dùng tự lưu (Johari Window...) | framework_type (FREEFORM/JOHARI_WINDOW/ACT_MATRIX/PERSONAL_SWOT/LIFE_POSITIONS — chỉ FREEFORM và JOHARI_WINDOW có API/UI dùng tới hiện nay), payload (JSONB, cấu trúc thay đổi theo framework_type) |
 
-**Bảo mật ở tầng dữ liệu:** Row-Level Security (RLS) được bật trên toàn bộ bảng ở Supabase nhưng **không có policy nào** — chủ đích, vì backend Spring Boot kết nối trực tiếp qua JDBC bằng role `postgres` (bỏ qua RLS), mục đích của việc bật RLS chỉ là chặn truy cập public ngoài ý muốn qua cơ chế PostgREST tự động của Supabase.
+**Bảo mật ở tầng dữ liệu:** Row-Level Security (RLS) được bật trên toàn bộ bảng (`V1__init_schema.sql`) nhưng **không có policy nào** — di sản từ thời còn dùng Supabase, khi mục đích bật RLS là chặn truy cập public ngoài ý muốn qua cơ chế PostgREST tự động của Supabase. Từ khi chuyển sang **Neon** (mục 7) thì cờ này **không còn tác dụng thật** — Neon không có lớp PostgREST tự expose bảng, và backend Spring Boot vẫn luôn kết nối trực tiếp qua JDBC bằng role có toàn quyền (bỏ qua RLS). Giữ lại chỉ vì đang nằm sẵn trong script schema, không cần thiết phải gỡ.
 
 **Không có bảng "Energy Log" riêng** trong schema hiện tại được liệt kê ở trên dù API vẫn hoạt động — kiểm tra thực thể `EnergyLogEntity` trong code khi cần chi tiết chính xác cột (spec này không liệt kê lại toàn bộ để tránh trùng lặp thông tin dễ lệch pha với migration thực tế).
 
@@ -120,7 +120,7 @@ Base path: `/api`. Toàn bộ route yêu cầu JWT hợp lệ (`Authorization: B
 | **Google OAuth2** | Đăng nhập/định danh | — |
 | **Google Gemini** (`gemini-3.6-flash`, `gemini-3.5-flash-lite`) | AI Coach chat, tóm tắt hội thoại, trích xuất bộ nhớ | Khoá API qua `GEMINI_API_KEY` |
 | **Lưu trữ file** | Ảnh đại diện | Lưu **trực tiếp trên ổ đĩa cục bộ server** (`uploads/avatars/`) — **rủi ro đã biết:** sẽ mất dữ liệu khi Azure Web App redeploy; cần chuyển sang Blob Storage trước khi mở rộng quy mô |
-| **PostgreSQL hosting** | Neon/Supabase ở production | pgvector cài sẵn cho tính năng tìm kiếm ngữ nghĩa tương lai, **chưa dùng** |
+| **PostgreSQL hosting** | **Neon** ở production (chuyển từ Supabase sau sự cố Supabase sập ngày 2026-09) | pgvector cài sẵn cho tính năng tìm kiếm ngữ nghĩa tương lai, **chưa dùng**. Kết nối qua host **direct (non-pooler)** của Neon, không dùng host `-pooler` — tránh xung đột giữa PgBouncer transaction-mode và connection pool HikariCP của app. |
 
 **Chưa tích hợp:** thanh toán/subscription, push notification, gửi email, phân tích hành vi (analytics SDK), lưu trữ đám mây (S3/Blob) cho file.
 
@@ -169,3 +169,4 @@ Nguồn sự thật: mã nguồn Java trong `src/main/java/org/mentorship/reflec
 | 2026-09-06 | Claude (agent) | Khởi tạo `spec.md` — khảo sát toàn bộ codebase backend hiện tại (API, schema 12 bảng, business logic AI Coach, auth/bảo mật, tích hợp bên thứ ba, tài liệu cũ) và viết tài liệu nghiệp vụ đầy đủ lần đầu tiên. |
 | 2026-09-10 | Claude (agent) | Sửa lỗi `PrivateNetworkAccessFilter`: trước đây filter trả 200 và ngắt request ngay khi thấy header preflight Private Network Access (PNA) của trình duyệt mobile, khiến request không bao giờ chạm tới `CorsFilter` của Spring Security → thiếu các header CORS bắt buộc (`Access-Control-Allow-Origin`/`Allow-Methods`/`Allow-Headers`) trong response preflight đó → trình duyệt mobile chặn toàn bộ request và trả về "Network Error", khiến đăng nhập/đăng ký bằng username-password thất bại trên một số trình duyệt mobile. Giờ filter chỉ gắn thêm header `Access-Control-Allow-Private-Network` rồi để chain tiếp tục xử lý CORS bình thường. |
 | 2026-09-11 | Claude (agent) | Thêm lưu trữ "đọc tâm trạng" phía server cho phiên chat AI Coach (migration 004: `mood_emotion/mood_score` trên `conversation_messages` và cung cảm xúc `initial_*`/`final_*` trên `conversations`, tính bằng heuristic từ khoá cục bộ `MoodScoringService` — không gọi Gemini) cùng 2 endpoint mới `GET /api/users/mood-summary` và `GET /api/users/stats` cho màn hình hồ sơ, kèm **thay đổi phá vỡ tương thích** ở `POST /api/conversations/{id}/messages` (nay trả `{userMessage, assistantMessage}` thay vì chỉ tin nhắn của AI) — `reflectly-fe/spec.md` cần cập nhật tương ứng. |
+| 2026-09-11 | Claude (agent) | Cập nhật mục 7 (Tích hợp bên thứ ba): PostgreSQL hosting production chuyển từ Supabase sang **Neon** sau khi Supabase gặp sự cố sập DB — dùng host direct (non-pooler) của Neon. `DB_URL`/`DB_USERNAME`/`DB_PASSWORD` vẫn hoàn toàn qua GitHub Secrets, không đổi file `.yml` nào. |
