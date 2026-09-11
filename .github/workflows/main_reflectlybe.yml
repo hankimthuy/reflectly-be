@@ -72,7 +72,33 @@ jobs:
             echo "::error::Thiếu GitHub Secrets bắt buộc — xem danh sách ở log phía trên."
             exit 1
           fi
-          echo "Đủ secrets, tiếp tục build."
+          # DB_URL phải là JDBC URL, KHÔNG phải chuỗi kết nối kiểu libpq/psql.
+          # Neon/Supabase hiển thị sẵn dạng "postgresql://user:pass@host/db?sslmode=require..."
+          # — dán thẳng chuỗi đó vào secret sẽ làm Hikari chết ngay lúc khởi động
+          # ("Driver claims to not accept jdbcUrl"). App không lên, và triệu chứng duy nhất
+          # là bước health check đỏ sau 5 phút — rất khó đoán. Bắt lỗi tại đây cho nhanh.
+          DB_URL_BAD=""
+          case "$S_DB_URL" in
+            jdbc:postgresql://*) ;;
+            *) DB_URL_BAD="không bắt đầu bằng 'jdbc:postgresql://'" ;;
+          esac
+          case "$S_DB_URL" in
+            # user/mật khẩu phải nằm ở DB_USERNAME/DB_PASSWORD, không nhúng trong URL.
+            *@*) DB_URL_BAD="${DB_URL_BAD:+$DB_URL_BAD; }có nhúng user:password (ký tự '@') trong URL" ;;
+          esac
+          if [ -n "$DB_URL_BAD" ]; then
+            echo "::error::DB_URL sai định dạng: $DB_URL_BAD"
+            echo "::error::Đúng phải là: jdbc:postgresql://<host>/<database>?sslmode=require"
+            echo "::error::Còn user/mật khẩu để riêng ở secret DB_USERNAME và DB_PASSWORD."
+            exit 1
+          fi
+          case "$S_DB_URL" in
+            *channel_binding=*)
+              echo "::warning::DB_URL chứa 'channel_binding=' — đây là tham số của psql/libpq, JDBC không dùng. Nên bỏ cho gọn."
+              ;;
+          esac
+
+          echo "Đủ secrets và DB_URL đúng định dạng, tiếp tục build."
 
   # ---------------------------------------------------------------------------
   # JOB 1 — Build file .jar
