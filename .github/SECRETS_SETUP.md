@@ -17,6 +17,13 @@ Go to: **GitHub repo → Settings → Secrets and variables → Actions → New 
 | `APP_CORS_ALLOWED_ORIGINS` | Azure SWA URL, e.g. `https://gray-island-018b47d00.1.azurestaticapps.net` |
 | `BE_HEALTH_URL` | Optional: `https://reflectlybe-dgcnc3fxdkb0eccc.eastasia-01.azurewebsites.net` |
 
+> **`DB_URL` must be a JDBC URL.** Neon and Supabase show a libpq connection string
+> (`postgresql://user:pass@host/db?sslmode=require&channel_binding=require`). Pasting that
+> verbatim makes the PostgreSQL driver reject it and the app dies at startup. Rewrite it as
+> `jdbc:postgresql://<host>/<database>?sslmode=require`, drop `channel_binding` (psql-only),
+> and keep the user and password in `DB_USERNAME` / `DB_PASSWORD`. The `preflight` job
+> rejects the wrong format before build.
+
 ## reflectly-fe (required)
 
 | Secret | Example / notes |
