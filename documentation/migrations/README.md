@@ -24,3 +24,4 @@ against prod is a stopgap, not the plan.
 | 001 | `001-add-entry-template-key.sql` | Entry Templates | Nullable column on `entries` |
 | 002 | `002-add-conversation-summary-and-saved-framework-entries.sql` | Aura Insight Catcher | Nullable column on `conversations` + new `saved_framework_entries` table |
 | 003 | `003-link-insights-and-saved-entries-to-person.sql` | Aura Insight Catcher Phase 2 | Nullable `person_id` FK columns on `insights` and `saved_framework_entries` |
+| 004 | `004-add-conversation-mood-fields.sql` | Aura Soft redesign (mood readings) | Nullable mood columns on `conversation_messages` and `conversations` |
