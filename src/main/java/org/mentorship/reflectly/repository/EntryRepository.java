@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -108,4 +109,42 @@ public interface EntryRepository extends JpaRepository<EntryEntity, String> {
      * @return Number of entries for the user.
      */
     long countByUserId(String userId);
+
+    /**
+     * Just the creation timestamps of a user's entries — a slim projection for the day-streak
+     * calculation, which only needs to know which calendar days have an entry and would
+     * otherwise pull every reflection body into memory.
+     * @param userId The user ID.
+     * @return Creation timestamps, unordered.
+     */
+    @Query("SELECT e.createdDate FROM EntryEntity e WHERE e.userId = :userId")
+    List<Instant> findCreatedDatesByUserId(@Param("userId") String userId);
+
+    /**
+     * Tag counts per emotion over a window, aggregated in the database rather than by loading
+     * entries. Only emotions actually tagged in the window come back — callers zero-fill the
+     * rest of the catalog.
+     * @param userId The user ID.
+     * @param from Window start (inclusive).
+     * @param to Window end (inclusive).
+     * @return Rows of {@code [emotion (String), count (Long)]}.
+     */
+    @Query("SELECT em, COUNT(em) FROM EntryEntity e JOIN e.emotions em "
+            + "WHERE e.userId = :userId AND e.createdDate BETWEEN :from AND :to GROUP BY em")
+    List<Object[]> countEmotionsByUserIdAndCreatedDateBetween(
+            @Param("userId") String userId,
+            @Param("from") Instant from,
+            @Param("to") Instant to
+    );
+
+    /**
+     * Entries created inside a window, oldest first — the entry half of the day-bucketed mood
+     * summary.
+     * @param userId The user ID.
+     * @param from Window start (inclusive).
+     * @param to Window end (inclusive).
+     * @return Entries within the window.
+     */
+    List<EntryEntity> findByUserIdAndCreatedDateBetweenOrderByCreatedDateAsc(
+            String userId, Instant from, Instant to);
 }

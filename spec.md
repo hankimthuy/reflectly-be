@@ -33,7 +33,7 @@ Sản phẩm đã trải qua 2 lần pivot (xem chi tiết lịch sử ở `refl
 
 ## 3. Dữ liệu — 12 bảng chính
 
-Nguồn sự thật: `db/migration/V1__init_schema.sql` (script tạo schema mới nhất) + các file trong `documentation/migrations/00{1,2,3}-*.sql` (lịch sử thay đổi tăng dần). **Không dùng** `database_schema.sql` ở gốc repo — đây là schema mẫu cũ, chỉ có 4 bảng, không phản ánh hệ thống hiện tại.
+Nguồn sự thật: `db/migration/V1__init_schema.sql` (script tạo schema mới nhất) + các file trong `documentation/migrations/00{1,2,3,4}-*.sql` (lịch sử thay đổi tăng dần — lưu ý `V1__init_schema.sql` đã lỗi thời so với các migration này). **Không dùng** `database_schema.sql` ở gốc repo — đây là schema mẫu cũ, chỉ có 4 bảng, không phản ánh hệ thống hiện tại.
 
 Hầu hết các bảng có cột audit chung (`created_date, created_by, last_modified_date, last_modified_by`) do Spring Data JPA tự quản lý.
 
@@ -43,8 +43,8 @@ Hầu hết các bảng có cột audit chung (`created_date, created_by, last_m
 | **user_core_values** | Giá trị cốt lõi người dùng chọn | quan hệ 1-nhiều với users, mỗi dòng 1 giá trị |
 | **entries** | Nhật ký tự viết | title, reflection (text), template_key (thêm sau ở migration 001) |
 | **entry_emotions** | Nhãn cảm xúc gắn vào 1 entry | cho phép trùng cảm xúc (không có composite PK) |
-| **conversations** | Phiên chat AI Coach | status (ACTIVE/ENDED/EXTRACTING/EXTRACTED/EXTRACTION_FAILED), summary (TEXT, **mã hoá AES-256** khi lưu, thêm ở migration 002) |
-| **conversation_messages** | Từng tin nhắn trong phiên chat | role (USER/ASSISTANT), content (TEXT, **mã hoá AES-256** khi lưu; có thể bị xoá trắng sau khi đã trích xuất xong nếu bật chế độ purge) |
+| **conversations** | Phiên chat AI Coach | status (ACTIVE/ENDED/EXTRACTING/EXTRACTED/EXTRACTION_FAILED), summary (TEXT, **mã hoá AES-256** khi lưu, thêm ở migration 002), cung cảm xúc của phiên: initial_mood_emotion/score + final_mood_emotion/score (nullable, thêm ở migration 004 — chốt 1 lần khi phiên kết thúc) |
+| **conversation_messages** | Từng tin nhắn trong phiên chat | role (USER/ASSISTANT), content (TEXT, **mã hoá AES-256** khi lưu; có thể bị xoá trắng sau khi đã trích xuất xong nếu bật chế độ purge), mood_emotion + mood_score (nullable, thêm ở migration 004 — chỉ gắn cho tin nhắn USER khi khớp từ khoá) |
 | **insights** | Insight do AI tự động trích xuất (chỉ đọc) | category (VALUE/BEHAVIOR_PATTERN/RELATIONSHIP), liên kết tuỳ chọn tới conversation và person (person thêm ở migration 003) |
 | **people** | Người trong Bản đồ Mối quan hệ | relationship_type (FAMILY/FRIEND/PARTNER/COLLEAGUE/MANAGER/OTHER), last_mentioned_at |
 | **relationship_events** | Sự kiện mối quan hệ do AI trích xuất | event_type (CONFLICT/BONDING/NEUTRAL), sentiment_score (-1..1), gắn với 1 person |
@@ -72,6 +72,8 @@ Base path: `/api`. Toàn bộ route yêu cầu JWT hợp lệ (`Authorization: B
 | | `PUT /api/users/password` | Đổi mật khẩu |
 | | `POST /api/users/avatar` | Tải ảnh đại diện (lưu ổ đĩa cục bộ server, xem mục 7) |
 | | `PUT /api/users/onboarding` | Lưu Core Values + danh sách người ban đầu, đánh dấu hoàn thành onboarding |
+| | `GET /api/users/mood-summary?days=&tz=` | Tâm trạng gom theo từng ngày lịch (mặc định 7 ngày, giới hạn 1–90) — mỗi ngày lấy tín hiệu "nặng" nhất gộp từ phiên chat đã kết thúc và entry trong ngày; ngày không có dữ liệu trả `hasData=false` |
+| | `GET /api/users/stats?days=&tz=` | Số liệu màn hình hồ sơ: chuỗi ngày viết liên tiếp (streak), tổng số phiên chat/entry, và phân bố cảm xúc trong N ngày gần nhất (mặc định 90, giới hạn 1–365) |
 | **Nhật ký** | `GET /api/entries`, `GET/PUT/DELETE /api/entries/{id}`, `POST /api/entries` | CRUD nhật ký, có phân trang |
 | **Năng lượng (Energy Logs)** | `GET /api/energy-logs?contextTag=`, `GET /api/energy-logs/range?days=`, `POST /api/energy-logs`, `DELETE /api/energy-logs/{id}` | CRUD + truy vấn xu hướng theo ngày — **xem mục 8, frontend không còn dùng** |
 | **Mối quan hệ** | `GET/POST /api/people`, `GET/PUT /api/people/{id}` | Quản lý người trong PRM; `GET` trả kèm `healthSignal` tính toán và `nudgeText` tuỳ chọn |
@@ -80,7 +82,7 @@ Base path: `/api`. Toàn bộ route yêu cầu JWT hợp lệ (`Authorization: B
 | **Đúc kết (Saved Framework Entries)** | `GET/POST /api/saved-framework-entries`, `GET/PUT/DELETE /api/saved-framework-entries/{id}` | CRUD, lọc theo `frameworkType` |
 | **Trò chuyện AI Coach** | `POST /api/conversations` | Bắt đầu phiên chat mới (**bị giới hạn quota** — mặc định tối đa 5 phiên/người dùng, kiểm soát chi phí Gemini) |
 | | `GET /api/conversations`, `GET /api/conversations/{id}` | Danh sách / chi tiết 1 phiên (kèm toàn bộ tin nhắn) |
-| | `POST /api/conversations/{id}/messages` | Gửi tin nhắn, nhận phản hồi AI (**bị giới hạn tần suất theo người dùng**) |
+| | `POST /api/conversations/{id}/messages` | Gửi tin nhắn, nhận phản hồi AI (**bị giới hạn tần suất theo người dùng**). **Đổi cấu trúc response (breaking)**: trước đây trả thẳng 1 tin nhắn của AI, nay trả `{userMessage, assistantMessage}` — client cần thay bản tin nhắn lạc quan (optimistic) của mình bằng `userMessage` để nhận `moodEmotion/moodScore` do server tính |
 | | `POST /api/conversations/{id}/end` | Kết thúc phiên → kích hoạt trích xuất bộ nhớ bất đồng bộ (xem mục 5) |
 | | `POST /api/conversations/{id}/summarize` | Sinh/làm mới bản tóm tắt markdown |
 
@@ -93,6 +95,7 @@ Base path: `/api`. Toàn bộ route yêu cầu JWT hợp lệ (`Authorization: B
 1. **Chat thời gian thực (`CoachAgentService`):** khi người dùng gửi tin nhắn, hệ thống gọi Gemini (model `gemini-3.6-flash`) với một system prompt tiếng Việt quy định vai trò "huấn luyện Socratic" — phản chiếu câu hỏi lại cho người dùng tự suy ngẫm, **không chẩn đoán, không trị liệu, nếu phát hiện khủng hoảng thì hướng dẫn tìm chuyên gia** — cá nhân hoá theo Core Values của người dùng.
 2. **Kết thúc phiên → trích xuất bộ nhớ (`MemoryExtractionService` + `MemoryExtractionPersister`):** khi người dùng bấm "Kết thúc phiên", một sự kiện được phát ra sau khi transaction commit thành công, xử lý **bất đồng bộ** (thread pool riêng `memoryExtractionExecutor`): gọi Gemini (yêu cầu trả về JSON có cấu trúc) để tự động trích xuất ra: người được nhắc tới (Person), sự kiện mối quan hệ (RelationshipEvent), và insight (Insight) — rồi ghi vào database. Có thể tuỳ chọn xoá nội dung tin nhắn gốc sau khi trích xuất xong (data minimization).
 3. **Tóm tắt theo yêu cầu (`ConversationSummaryService`):** sinh bản tóm tắt markdown cho 1 phiên, dùng model nhẹ hơn (`gemini-3.5-flash-lite`), có thể gọi lại nhiều lần để làm mới.
+4. **Đọc tâm trạng (`MoodScoringService`) — KHÔNG dùng AI:** đây là **heuristic đối chiếu từ khoá chạy cục bộ trong ứng dụng**, **không gọi Gemini/LLM** (khác với 3 mục trên) — một từ điển nhỏ Anh + Việt cho 9 cảm xúc, mỗi cảm xúc có "độ nặng" 0–1; văn bản được chuyển chữ thường rồi dò chuỗi con, nhiều từ khoá khớp thì lấy cảm xúc **nặng nhất**. Khi người dùng gửi tin nhắn, kết quả được lưu vào chính tin nhắn đó (`mood_emotion/mood_score`); khi phiên kết thúc, tin nhắn USER **đầu tiên và cuối cùng** có điểm sẽ được chốt thành cung cảm xúc của phiên (`initial_*`/`final_*`) — nếu không tin nhắn nào khớp thì cả 4 trường để trống. Kết thúc phiên lần thứ hai không tính lại (giữ nguyên tính idempotent nhờ nhánh chỉ-chạy-khi-ACTIVE có sẵn). Cùng bảng độ nặng này được `UserStatsService` dùng lại để chấm cảm xúc của entry khi dựng `mood-summary`.
 
 Đây chính là cơ chế đứng sau tính năng "Insight Timeline" và một phần của "Bản đồ Mối quan hệ" ở frontend — insight/person không phải lúc nào cũng do người dùng tự tạo mà phần lớn được AI tự động sinh ra sau mỗi phiên chat.
 
@@ -154,6 +157,8 @@ Nguồn sự thật: mã nguồn Java trong `src/main/java/org/mentorship/reflec
 - Chưa dùng công cụ quản lý migration chuẩn (Flyway) — thay đổi schema hiện quản lý thủ công.
 - Ảnh đại diện lưu trên ổ đĩa cục bộ server — không bền vững khi redeploy.
 - Mã hoá nội dung chat phụ thuộc biến môi trường `ENCRYPTION_KEY` được cấu hình đúng — nếu thiếu, dữ liệu lưu ở dạng chưa mã hoá.
+- Việc "đọc tâm trạng" (`MoodScoringService`) chỉ là **đối chiếu từ khoá thô**, không phải phân tích cảm xúc (sentiment analysis) thật — không hiểu phủ định, mỉa mai hay ngữ cảnh; phần lớn câu bình thường sẽ không khớp từ khoá nào và không có điểm. Chỉ nên dùng để minh hoạ, tuyệt đối không dùng như một kết luận về tâm lý người dùng.
+- Việc gom dữ liệu theo **ngày lịch** (streak, mood-summary) phụ thuộc tham số `tz` (IANA timezone) do frontend truyền lên, vì **hệ thống không lưu timezone của từng người dùng**; thiếu hoặc sai định dạng thì mặc định về UTC (không báo lỗi) — nghĩa là cùng một dữ liệu có thể cho ra streak khác nhau nếu client gửi `tz` khác nhau.
 
 ---
 
@@ -163,3 +168,4 @@ Nguồn sự thật: mã nguồn Java trong `src/main/java/org/mentorship/reflec
 |---|---|---|
 | 2026-09-06 | Claude (agent) | Khởi tạo `spec.md` — khảo sát toàn bộ codebase backend hiện tại (API, schema 12 bảng, business logic AI Coach, auth/bảo mật, tích hợp bên thứ ba, tài liệu cũ) và viết tài liệu nghiệp vụ đầy đủ lần đầu tiên. |
 | 2026-09-10 | Claude (agent) | Sửa lỗi `PrivateNetworkAccessFilter`: trước đây filter trả 200 và ngắt request ngay khi thấy header preflight Private Network Access (PNA) của trình duyệt mobile, khiến request không bao giờ chạm tới `CorsFilter` của Spring Security → thiếu các header CORS bắt buộc (`Access-Control-Allow-Origin`/`Allow-Methods`/`Allow-Headers`) trong response preflight đó → trình duyệt mobile chặn toàn bộ request và trả về "Network Error", khiến đăng nhập/đăng ký bằng username-password thất bại trên một số trình duyệt mobile. Giờ filter chỉ gắn thêm header `Access-Control-Allow-Private-Network` rồi để chain tiếp tục xử lý CORS bình thường. |
+| 2026-09-11 | Claude (agent) | Thêm lưu trữ "đọc tâm trạng" phía server cho phiên chat AI Coach (migration 004: `mood_emotion/mood_score` trên `conversation_messages` và cung cảm xúc `initial_*`/`final_*` trên `conversations`, tính bằng heuristic từ khoá cục bộ `MoodScoringService` — không gọi Gemini) cùng 2 endpoint mới `GET /api/users/mood-summary` và `GET /api/users/stats` cho màn hình hồ sơ, kèm **thay đổi phá vỡ tương thích** ở `POST /api/conversations/{id}/messages` (nay trả `{userMessage, assistantMessage}` thay vì chỉ tin nhắn của AI) — `reflectly-fe/spec.md` cần cập nhật tương ứng. |

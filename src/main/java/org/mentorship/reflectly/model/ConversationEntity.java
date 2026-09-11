@@ -44,6 +44,25 @@ public class ConversationEntity extends AuditableEntity {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    /**
+     * Mood arc of the session, computed once when it ends from the first and last USER messages
+     * that carried a mood reading (see {@code ConversationService.endConversation}). All four
+     * stay null when no message in the session matched the heuristic.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "initial_mood_emotion", length = 20)
+    private Emotion initialMoodEmotion;
+
+    @Column(name = "initial_mood_score")
+    private Double initialMoodScore;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "final_mood_emotion", length = 20)
+    private Emotion finalMoodEmotion;
+
+    @Column(name = "final_mood_score")
+    private Double finalMoodScore;
+
     public ConversationEntity(String id, UserEntity user) {
         this.id = id;
         this.user = user;

@@ -8,10 +8,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.constants.ApiConstants;
-import org.mentorship.reflectly.dto.ConversationMessageResponseDto;
 import org.mentorship.reflectly.dto.ConversationResponseDto;
 import org.mentorship.reflectly.dto.PagedResponseDto;
 import org.mentorship.reflectly.dto.SendMessageRequestDto;
+import org.mentorship.reflectly.dto.SendMessageResponseDto;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.ConversationService;
 import org.springdoc.core.annotations.ParameterObject;
@@ -83,7 +83,10 @@ public class ConversationController {
         return ResponseEntity.ok(conversationService.getConversationById(userId, id));
     }
 
-    @Operation(summary = "Send a message to the Coach", description = "Persists the user's message and returns the Coach's reply")
+    @Operation(summary = "Send a message to the Coach",
+            description = "Persists the user's message and returns both it and the Coach's reply. "
+                    + "The persisted user message carries the server-computed mood reading "
+                    + "(moodEmotion/moodScore), so callers should replace their optimistic copy with it.")
     @ApiResponses(value = {
             @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Reply generated successfully"),
             @ApiResponse(responseCode = ApiConstants.BAD_REQUEST, description = "Validation error or conversation not active"),
@@ -91,7 +94,7 @@ public class ConversationController {
             @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Invalid or missing authentication token")
     })
     @PostMapping("/{id}/messages")
-    public ResponseEntity<ConversationMessageResponseDto> sendMessage(
+    public ResponseEntity<SendMessageResponseDto> sendMessage(
             @Parameter(description = "Conversation ID") @PathVariable String id,
             @Valid @RequestBody SendMessageRequestDto requestDto,
             GoogleAuthenticationToken authentication) {
