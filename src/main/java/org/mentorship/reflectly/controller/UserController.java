@@ -1,6 +1,7 @@
 package org.mentorship.reflectly.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -8,13 +9,16 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.mentorship.reflectly.constants.ApiConstants;
 import org.mentorship.reflectly.dto.ChangePasswordRequestDto;
+import org.mentorship.reflectly.dto.MoodSummaryResponseDto;
 import org.mentorship.reflectly.dto.OnboardingRequestDto;
 import org.mentorship.reflectly.dto.UpdateProfileRequestDto;
 import org.mentorship.reflectly.dto.UserProfileRecord;
+import org.mentorship.reflectly.dto.UserStatsResponseDto;
 import org.mentorship.reflectly.model.UserEntity;
 import org.mentorship.reflectly.security.GoogleAuthenticationToken;
 import org.mentorship.reflectly.service.PersonService;
 import org.mentorship.reflectly.service.UserService;
+import org.mentorship.reflectly.service.UserStatsService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,8 +35,17 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
 
+    private static final int DEFAULT_MOOD_SUMMARY_DAYS = 7;
+    private static final int MIN_MOOD_SUMMARY_DAYS = 1;
+    private static final int MAX_MOOD_SUMMARY_DAYS = 90;
+
+    private static final int DEFAULT_STATS_DAYS = 90;
+    private static final int MIN_STATS_DAYS = 1;
+    private static final int MAX_STATS_DAYS = 365;
+
     private final UserService userService;
     private final PersonService personService;
+    private final UserStatsService userStatsService;
 
     @Operation(
         summary = "Get user profile", 
@@ -134,6 +147,58 @@ public class UserController {
         request.getPeople().forEach(person -> personService.createPerson(userId, person));
         UserEntity updated = userService.completeOnboarding(request.getCoreValues());
         return ResponseEntity.ok(userService.toProfileRecord(updated));
+    }
+
+    @Operation(
+        summary = "Get day-bucketed mood summary",
+        description = "One row per calendar day over the last N days (oldest first), each carrying the heaviest "
+                + "mood signal that day — pooled across ended Coach sessions and written entries. Days with no "
+                + "signal come back with hasData=false. Returns structured facts only; wording/trend copy is the "
+                + "client's job."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Mood summary retrieved successfully"),
+        @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Not authenticated")
+    })
+    @GetMapping("/mood-summary")
+    public ResponseEntity<MoodSummaryResponseDto> getMoodSummary(
+            @Parameter(description = "Number of days back, including today (default 7, clamped to 1-90)")
+            @RequestParam(required = false) Integer days,
+            @Parameter(description = "IANA timezone used to bucket days (default UTC; unrecognised values fall back to UTC)")
+            @RequestParam(required = false) String tz,
+            GoogleAuthenticationToken authentication) {
+        Long userId = authentication.getUser().getId();
+        int windowDays = clamp(days, DEFAULT_MOOD_SUMMARY_DAYS, MIN_MOOD_SUMMARY_DAYS, MAX_MOOD_SUMMARY_DAYS);
+        return ResponseEntity.ok(userStatsService.getMoodSummary(userId, windowDays, tz));
+    }
+
+    @Operation(
+        summary = "Get profile stats",
+        description = "Writing streak (entries only, with a 1-day grace period), talk/entry totals, and the "
+                + "emotion distribution over the last N days. The distribution always lists all 9 catalog "
+                + "emotions, zero-filled, heaviest count first; mostFrequentEmotion is scoped to the same window."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = ApiConstants.SUCCESS, description = "Stats retrieved successfully"),
+        @ApiResponse(responseCode = ApiConstants.UNAUTHORIZED, description = "Not authenticated")
+    })
+    @GetMapping("/stats")
+    public ResponseEntity<UserStatsResponseDto> getStats(
+            @Parameter(description = "Emotion window in days (default 90, clamped to 1-365)")
+            @RequestParam(required = false) Integer days,
+            @Parameter(description = "IANA timezone used to bucket days (default UTC; unrecognised values fall back to UTC)")
+            @RequestParam(required = false) String tz,
+            GoogleAuthenticationToken authentication) {
+        Long userId = authentication.getUser().getId();
+        int windowDays = clamp(days, DEFAULT_STATS_DAYS, MIN_STATS_DAYS, MAX_STATS_DAYS);
+        return ResponseEntity.ok(userStatsService.getStats(userId, windowDays, tz));
+    }
+
+    private int clamp(Integer requested, int fallback, int min, int max) {
+        if (requested == null) {
+            return fallback;
+        }
+        return Math.min(Math.max(requested, min), max);
     }
 
     private String getFileExtension(String filename) {

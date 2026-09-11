@@ -17,6 +17,8 @@ public class ConversationConverter {
                 .role(entity.getRole())
                 .content(entity.getContent())
                 .createdAt(entity.getCreatedDate())
+                .moodEmotion(entity.getMoodEmotion())
+                .moodScore(entity.getMoodScore())
                 .build();
     }
 
@@ -28,6 +30,10 @@ public class ConversationConverter {
                 .endedAt(entity.getEndedAt())
                 .messages(messages.stream().map(this::toMessageResponseDto).toList())
                 .summary(entity.getSummary())
+                .initialMoodEmotion(entity.getInitialMoodEmotion())
+                .initialMoodScore(entity.getInitialMoodScore())
+                .finalMoodEmotion(entity.getFinalMoodEmotion())
+                .finalMoodScore(entity.getFinalMoodScore())
                 .build();
     }
 }

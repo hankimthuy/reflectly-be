@@ -5,8 +5,8 @@ import org.mentorship.reflectly.ai.CoachAgentService;
 import org.mentorship.reflectly.ai.ConversationEndedEvent;
 import org.mentorship.reflectly.ai.ConversationSummaryService;
 import org.mentorship.reflectly.converter.ConversationConverter;
-import org.mentorship.reflectly.dto.ConversationMessageResponseDto;
 import org.mentorship.reflectly.dto.ConversationResponseDto;
+import org.mentorship.reflectly.dto.SendMessageResponseDto;
 import org.mentorship.reflectly.exception.NotFoundException;
 import org.mentorship.reflectly.exception.QuotaExceededException;
 import org.mentorship.reflectly.exception.ValidationException;
@@ -35,6 +35,7 @@ public class ConversationService {
     private final ConversationConverter conversationConverter;
     private final CoachAgentService coachAgentService;
     private final ConversationSummaryService conversationSummaryService;
+    private final MoodScoringService moodScoringService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -74,10 +75,11 @@ public class ConversationService {
     }
 
     /**
-     * Persists the user's message, calls the Coach for a reply, persists that too, and returns
-     * just the assistant's reply (the caller already has the user's own message optimistically).
+     * Persists the user's message (with its mood reading, which only the server computes), calls
+     * the Coach for a reply, persists that too, and returns both — the caller replaces its
+     * optimistic copy of the user message with the persisted one to pick up the mood fields.
      */
-    public ConversationMessageResponseDto sendMessage(Long userId, String conversationId, String content) {
+    public SendMessageResponseDto sendMessage(Long userId, String conversationId, String content) {
         ConversationEntity conversation = findOwnedConversation(userId, conversationId);
         if (conversation.getStatus() != ConversationStatus.ACTIVE) {
             throw new ValidationException("Conversation is not active");
@@ -88,6 +90,10 @@ public class ConversationService {
 
         ConversationMessageEntity userMessage = new ConversationMessageEntity(
                 UUID.randomUUID().toString(), conversation, MessageRole.USER, content);
+        moodScoringService.score(content).ifPresent(reading -> {
+            userMessage.setMoodEmotion(reading.emotion());
+            userMessage.setMoodScore(reading.heaviness());
+        });
         conversationMessageRepository.save(userMessage);
 
         String replyText = coachAgentService.getReply(history, content, conversation.getUser().getCoreValues());
@@ -96,7 +102,10 @@ public class ConversationService {
                 UUID.randomUUID().toString(), conversation, MessageRole.ASSISTANT, replyText);
         conversationMessageRepository.save(assistantMessage);
 
-        return conversationConverter.toMessageResponseDto(assistantMessage);
+        return SendMessageResponseDto.builder()
+                .userMessage(conversationConverter.toMessageResponseDto(userMessage))
+                .assistantMessage(conversationConverter.toMessageResponseDto(assistantMessage))
+                .build();
     }
 
     /**
@@ -106,14 +115,38 @@ public class ConversationService {
      */
     public ConversationResponseDto endConversation(Long userId, String conversationId) {
         ConversationEntity conversation = findOwnedConversation(userId, conversationId);
+        List<ConversationMessageEntity> messages =
+                conversationMessageRepository.findByConversationIdOrderByCreatedDateAsc(conversationId);
+
         if (conversation.getStatus() == ConversationStatus.ACTIVE) {
             conversation.end();
+            applyMoodArc(conversation, messages);
             conversationRepository.save(conversation);
             eventPublisher.publishEvent(new ConversationEndedEvent(conversationId));
         }
-        List<ConversationMessageEntity> messages =
-                conversationMessageRepository.findByConversationIdOrderByCreatedDateAsc(conversationId);
         return conversationConverter.toResponseDto(conversation, messages);
+    }
+
+    /**
+     * Records where the session started and where it landed, from the first and last USER
+     * messages that carried a mood reading. Left entirely null when no message was scored — an
+     * absent arc is meaningfully different from a flat one. Only ever called from inside the
+     * ACTIVE-only branch above, so re-ending an already-ended session cannot rewrite history.
+     */
+    private void applyMoodArc(ConversationEntity conversation, List<ConversationMessageEntity> messages) {
+        List<ConversationMessageEntity> scored = messages.stream()
+                .filter(message -> message.getRole() == MessageRole.USER)
+                .filter(message -> message.getMoodScore() != null)
+                .toList();
+        if (scored.isEmpty()) {
+            return;
+        }
+        ConversationMessageEntity first = scored.get(0);
+        ConversationMessageEntity last = scored.get(scored.size() - 1);
+        conversation.setInitialMoodEmotion(first.getMoodEmotion());
+        conversation.setInitialMoodScore(first.getMoodScore());
+        conversation.setFinalMoodEmotion(last.getMoodEmotion());
+        conversation.setFinalMoodScore(last.getMoodScore());
     }
 
     /**

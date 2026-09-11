@@ -34,6 +34,19 @@ public class ConversationMessageEntity extends AuditableEntity {
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    /**
+     * Mood read off this message by {@link org.mentorship.reflectly.service.MoodScoringService}
+     * — a local keyword heuristic, not an AI call. Null when no keyword matched (the common
+     * case) and on every ASSISTANT message.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mood_emotion", length = 20)
+    private Emotion moodEmotion;
+
+    /** Heaviness (0..1) of {@link #moodEmotion}; null whenever that is null. */
+    @Column(name = "mood_score")
+    private Double moodScore;
+
     public ConversationMessageEntity(String id, ConversationEntity conversation, MessageRole role, String content) {
         this.id = id;
         this.conversation = conversation;
