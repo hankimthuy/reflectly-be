@@ -8,7 +8,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Covers the local keyword mood heuristic ported from the frontend's moodUtil.ts. No Gemini
+ * Covers the local keyword mood heuristic ported from the frontend's moodUtil.ts. No OpenRouter
  * involved — these assertions pin the lexicon and the "heaviest match wins" rule.
  */
 class MoodScoringServiceTest {

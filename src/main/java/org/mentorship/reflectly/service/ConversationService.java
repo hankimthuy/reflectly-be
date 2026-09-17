@@ -39,7 +39,7 @@ public class ConversationService {
     private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * Alpha-phase hard cap on conversations per user, to bound Gemini API spend before this app
+     * Alpha-phase hard cap on conversations per user, to bound OpenRouter API spend before this app
      * has a real access/billing model. Env-tunable so it can be raised later with no code change.
      */
     @Value("${app.quota.max-conversations-per-user:5}")

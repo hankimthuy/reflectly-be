@@ -13,7 +13,7 @@ import java.util.Optional;
 /**
  * Reads a coarse mood signal off free text using a small EN+VI keyword lexicon.
  *
- * <p><b>This is a local heuristic — it does not call Gemini or any other model.</b> It is the
+ * <p><b>This is a local heuristic — it does not call OpenRouter or any other model.</b> It is the
  * server-side port of {@code reflectly-fe/src/utils/moodUtil.ts}, moved here so a reading can be
  * persisted with the message that produced it instead of being recomputed in the browser. Treat
  * any single reading as illustrative, not as sentiment analysis, and never as a diagnosis.

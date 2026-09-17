@@ -1,13 +1,6 @@
 package org.mentorship.reflectly.ai;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.genai.Client;
-import com.google.genai.types.Content;
-import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Part;
-import com.google.genai.types.Schema;
-import com.google.genai.types.Type;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mentorship.reflectly.constants.AiConstants;
@@ -21,11 +14,10 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Runs after a Coach session ends: turns the raw transcript into structured People/
- * RelationshipEvents/Insights via a cheap Gemini model, then (by default) purges the raw
+ * RelationshipEvents/Insights via a cheap model on OpenRouter, then (by default) purges the raw
  * message content — only the derived, structured data is meant to persist long-term.
  * <p>
  * Orchestration only — all DB writes go through {@link MemoryExtractionPersister} so
@@ -36,7 +28,32 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class MemoryExtractionService {
 
-    private final Client geminiClient;
+    /**
+     * OpenRouter's OpenAI-compatible API has no equivalent of Gemini's typed responseSchema, so
+     * the shape is stated in the prompt and the call is made in JSON-object mode. Jackson ignores
+     * unknown fields (see ExtractionResult), and a missing or malformed answer fails the
+     * extraction the same way a schema violation used to.
+     */
+    private static final String SCHEMA_SPEC = """
+            {
+              "people": [
+                { "name": "string", "relationshipType": "FAMILY|FRIEND|PARTNER|COLLEAGUE|MANAGER|OTHER" }
+              ],
+              "events": [
+                { "personName": "string (phải trùng một name trong people)",
+                  "eventType": "CONFLICT|BONDING|NEUTRAL",
+                  "summary": "string",
+                  "sentimentScore": "số từ -1 đến 1" }
+              ],
+              "insights": [
+                { "insightText": "string",
+                  "category": "VALUE|BEHAVIOR_PATTERN|RELATIONSHIP",
+                  "personName": "string hoặc null" }
+              ]
+            }
+            """;
+
+    private final OpenRouterClient openRouterClient;
     private final ObjectMapper objectMapper;
     private final ConversationMessageRepository conversationMessageRepository;
     private final MemoryExtractionPersister persister;
@@ -97,72 +114,26 @@ public class MemoryExtractionService {
                 Nếu không có thông tin phù hợp cho một mục, trả về mảng rỗng cho mục đó. Chỉ trích xuất những \
                 gì thực sự xuất hiện trong hội thoại, không bịa thêm.
 
+                Chỉ trả về một object JSON duy nhất, không kèm giải thích, theo đúng cấu trúc sau:
+                %s
+
                 Hội thoại:
                 %s
-                """.formatted(transcript);
+                """.formatted(SCHEMA_SPEC, transcript);
 
-        GenerateContentConfig config = GenerateContentConfig.builder()
-                .responseMimeType("application/json")
-                .responseSchema(buildResponseSchema())
-                .maxOutputTokens(AiConstants.EXTRACTION_MAX_OUTPUT_TOKENS)
-                .build();
-
-        GenerateContentResponse response = geminiClient.models.generateContent(
+        String content = openRouterClient.complete(
                 AiConstants.MEMORY_EXTRACTION_MODEL,
-                Content.builder().role("user").parts(Part.fromText(prompt)).build(),
-                config);
-
-        response.usageMetadata().ifPresent(usage -> log.info(
-                "Gemini tokens used (memory extraction): total={}, prompt={}, candidates={}",
-                usage.totalTokenCount().orElse(null),
-                usage.promptTokenCount().orElse(null),
-                usage.candidatesTokenCount().orElse(null)));
+                null,
+                prompt,
+                AiConstants.EXTRACTION_MAX_OUTPUT_TOKENS,
+                true,
+                "memory extraction");
 
         try {
-            return objectMapper.readValue(response.text(), ExtractionResult.class);
+            return objectMapper.treeToValue(
+                    openRouterClient.parseJson(content, "memory extraction"), ExtractionResult.class);
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to parse extraction model response as JSON", e);
+            throw new IllegalStateException("Failed to map extraction model response onto ExtractionResult", e);
         }
-    }
-
-    private Schema buildResponseSchema() {
-        Schema personSchema = Schema.builder()
-                .type(Type.Known.OBJECT)
-                .properties(Map.of(
-                        "name", Schema.builder().type(Type.Known.STRING).build(),
-                        "relationshipType", Schema.builder().type(Type.Known.STRING)
-                                .enum_("FAMILY", "FRIEND", "PARTNER", "COLLEAGUE", "MANAGER", "OTHER").build()))
-                .required("name", "relationshipType")
-                .build();
-
-        Schema eventSchema = Schema.builder()
-                .type(Type.Known.OBJECT)
-                .properties(Map.of(
-                        "personName", Schema.builder().type(Type.Known.STRING).build(),
-                        "eventType", Schema.builder().type(Type.Known.STRING)
-                                .enum_("CONFLICT", "BONDING", "NEUTRAL").build(),
-                        "summary", Schema.builder().type(Type.Known.STRING).build(),
-                        "sentimentScore", Schema.builder().type(Type.Known.NUMBER).build()))
-                .required("personName", "eventType", "summary")
-                .build();
-
-        Schema insightSchema = Schema.builder()
-                .type(Type.Known.OBJECT)
-                .properties(Map.of(
-                        "insightText", Schema.builder().type(Type.Known.STRING).build(),
-                        "category", Schema.builder().type(Type.Known.STRING)
-                                .enum_("VALUE", "BEHAVIOR_PATTERN", "RELATIONSHIP").build(),
-                        "personName", Schema.builder().type(Type.Known.STRING).build()))
-                .required("insightText", "category")
-                .build();
-
-        return Schema.builder()
-                .type(Type.Known.OBJECT)
-                .properties(Map.of(
-                        "people", Schema.builder().type(Type.Known.ARRAY).items(personSchema).build(),
-                        "events", Schema.builder().type(Type.Known.ARRAY).items(eventSchema).build(),
-                        "insights", Schema.builder().type(Type.Known.ARRAY).items(insightSchema).build()))
-                .required("people", "events", "insights")
-                .build();
     }
 }

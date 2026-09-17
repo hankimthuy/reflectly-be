@@ -36,7 +36,7 @@ jobs:
           S_JWT:       ${{ secrets.JWT_SECRET }}
           S_G_ID:      ${{ secrets.GOOGLE_CLIENT_ID }}
           S_G_SECRET:  ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          S_GEMINI:    ${{ secrets.GEMINI_API_KEY }}
+          S_OPENROUTER: ${{ secrets.OPENROUTER_API_KEY }}
           S_ENC:       ${{ secrets.ENCRYPTION_KEY }}
           S_CORS:      ${{ secrets.APP_CORS_ALLOWED_ORIGINS }}
         run: |
@@ -61,7 +61,7 @@ jobs:
           need "JWT_SECRET"                         "$S_JWT"
           need "GOOGLE_CLIENT_ID"                   "$S_G_ID"
           need "GOOGLE_CLIENT_SECRET"               "$S_G_SECRET"
-          need "GEMINI_API_KEY"                     "$S_GEMINI"
+          need "OPENROUTER_API_KEY"                 "$S_OPENROUTER"
           need "ENCRYPTION_KEY"                     "$S_ENC"
           need "APP_CORS_ALLOWED_ORIGINS"           "$S_CORS"
 
@@ -150,7 +150,7 @@ jobs:
               { "name": "JWT_SECRET",               "value": "${{ secrets.JWT_SECRET }}",           "slotSetting": false },
               { "name": "GOOGLE_CLIENT_ID",         "value": "${{ secrets.GOOGLE_CLIENT_ID }}",     "slotSetting": false },
               { "name": "GOOGLE_CLIENT_SECRET",     "value": "${{ secrets.GOOGLE_CLIENT_SECRET }}", "slotSetting": false },
-              { "name": "GEMINI_API_KEY",           "value": "${{ secrets.GEMINI_API_KEY }}",       "slotSetting": false },
+              { "name": "OPENROUTER_API_KEY",       "value": "${{ secrets.OPENROUTER_API_KEY }}",   "slotSetting": false },
               { "name": "ENCRYPTION_KEY",           "value": "${{ secrets.ENCRYPTION_KEY }}",       "slotSetting": false },
               { "name": "APP_CORS_ALLOWED_ORIGINS", "value": "${{ secrets.APP_CORS_ALLOWED_ORIGINS }}", "slotSetting": false },
               { "name": "SPRING_PROFILES_ACTIVE",   "value": "prod",  "slotSetting": false }

@@ -30,8 +30,14 @@ app:
     client-secret: ${GOOGLE_CLIENT_SECRET:YOUR_CLIENT_SECRET_HERE}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:8080}
-  gemini:
-    api-key: ${GEMINI_API_KEY:}
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY:}
+    base-url: ${OPENROUTER_BASE_URL:https://openrouter.ai/api/v1}
+    # A Coach reply is a full model round-trip; the default read timeout has to outlast it.
+    timeout-seconds: ${OPENROUTER_TIMEOUT_SECONDS:60}
+    # Optional attribution headers for OpenRouter's app leaderboard.
+    site-url: ${OPENROUTER_SITE_URL:}
+    site-name: ${OPENROUTER_SITE_NAME:Reflectly}
   encryption:
     key: ${ENCRYPTION_KEY:}
   conversations:
@@ -40,7 +46,7 @@ app:
     # Username/password login+signup — kept ON by default for local/dev testing.
     local-credentials-enabled: ${LOCAL_AUTH_ENABLED:true}
   quota:
-    # Alpha-phase hard cap on Coach conversations per user, to bound Gemini API spend.
+    # Alpha-phase hard cap on Coach conversations per user, to bound OpenRouter API spend.
     # Raise via env var once ready for wider access — no code change needed.
     max-conversations-per-user: ${MAX_CONVERSATIONS_PER_USER:5}
   rate-limit:
