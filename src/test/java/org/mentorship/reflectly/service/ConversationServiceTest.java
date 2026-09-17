@@ -38,7 +38,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Covers the alpha-phase conversation quota added to bound Gemini API spend (see
+ * Covers the alpha-phase conversation quota added to bound OpenRouter API spend (see
  * app.quota.max-conversations-per-user) and the mood readings persisted alongside chat messages.
  */
 @ExtendWith(MockitoExtension.class)

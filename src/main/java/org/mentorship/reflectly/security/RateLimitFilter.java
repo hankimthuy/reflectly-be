@@ -28,7 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * <ul>
  *   <li>Per-IP on {@code /api/auth/**} — the only unauthenticated surface, so IP is the only key
  *   available; blunts credential-stuffing / signup hammering.</li>
- *   <li>Per-user on {@code POST /api/conversations/**} — the endpoints that call Gemini; blunts a
+ *   <li>Per-user on {@code POST /api/conversations/**} — the endpoints that call the model; blunts a
  *   single (even legitimate) account hammering the Coach.</li>
  * </ul>
  * Must run after authentication has been resolved (see SecurityConfig filter ordering) so the

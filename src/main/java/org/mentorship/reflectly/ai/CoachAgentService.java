@@ -1,12 +1,8 @@
 package org.mentorship.reflectly.ai;
 
-import com.google.genai.Client;
-import com.google.genai.types.Content;
-import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Part;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.mentorship.reflectly.ai.OpenRouterClient.ChatMessage;
 import org.mentorship.reflectly.constants.AiConstants;
 import org.mentorship.reflectly.model.ConversationMessageEntity;
 import org.mentorship.reflectly.model.MessageRole;
@@ -57,7 +53,7 @@ public class CoachAgentService {
             Map.entry("peace", "Bình an"), Map.entry("contribution", "Cống hiến"),
             Map.entry("achievement", "Thành tựu"), Map.entry("learning", "Học hỏi"));
 
-    private final Client geminiClient;
+    private final OpenRouterClient openRouterClient;
 
     /**
      * @param history         prior turns in this conversation, oldest first. Entries with a
@@ -68,34 +64,19 @@ public class CoachAgentService {
      * @return the Coach's reply text.
      */
     public String getReply(List<ConversationMessageEntity> history, String newUserMessage, List<String> coreValues) {
-        List<Content> contents = new ArrayList<>();
+        List<ChatMessage> messages = new ArrayList<>();
+        messages.add(ChatMessage.system(buildSystemPrompt(coreValues)));
         for (ConversationMessageEntity message : history) {
             if (message.getContent() == null) {
                 continue;
             }
-            String role = message.getRole() == MessageRole.USER ? "user" : "model";
-            contents.add(Content.builder().role(role).parts(Part.fromText(message.getContent())).build());
+            String role = message.getRole() == MessageRole.USER ? "user" : "assistant";
+            messages.add(new ChatMessage(role, message.getContent()));
         }
-        contents.add(Content.builder().role("user").parts(Part.fromText(newUserMessage)).build());
+        messages.add(ChatMessage.user(newUserMessage));
 
-        GenerateContentConfig config = GenerateContentConfig.builder()
-                .systemInstruction(Content.builder().parts(Part.fromText(buildSystemPrompt(coreValues))).build())
-                .maxOutputTokens(AiConstants.COACH_MAX_OUTPUT_TOKENS)
-                .build();
-
-        GenerateContentResponse response = geminiClient.models.generateContent(AiConstants.COACH_MODEL, contents, config);
-        logTokenUsage("coach reply", response);
-        return response.text();
-    }
-
-    /** Best-effort spend visibility in Azure logs — no dashboard, just something to grep. */
-    private void logTokenUsage(String callSite, GenerateContentResponse response) {
-        response.usageMetadata().ifPresent(usage -> log.info(
-                "Gemini tokens used ({}): total={}, prompt={}, candidates={}",
-                callSite,
-                usage.totalTokenCount().orElse(null),
-                usage.promptTokenCount().orElse(null),
-                usage.candidatesTokenCount().orElse(null)));
+        return openRouterClient.complete(
+                AiConstants.COACH_MODEL, messages, AiConstants.COACH_MAX_OUTPUT_TOKENS, false, "coach reply");
     }
 
     private String buildSystemPrompt(List<String> coreValues) {

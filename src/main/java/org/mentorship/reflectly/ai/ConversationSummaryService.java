@@ -1,10 +1,5 @@
 package org.mentorship.reflectly.ai;
 
-import com.google.genai.Client;
-import com.google.genai.types.Content;
-import com.google.genai.types.GenerateContentConfig;
-import com.google.genai.types.GenerateContentResponse;
-import com.google.genai.types.Part;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mentorship.reflectly.constants.AiConstants;
@@ -40,7 +35,7 @@ public class ConversationSummaryService {
             %s
             """;
 
-    private final Client geminiClient;
+    private final OpenRouterClient openRouterClient;
 
     public String summarize(List<ConversationMessageEntity> messages) {
         String transcript = buildTranscript(messages);
@@ -48,22 +43,13 @@ public class ConversationSummaryService {
             return "Chưa có nội dung trò chuyện để tóm tắt.";
         }
 
-        GenerateContentConfig config = GenerateContentConfig.builder()
-                .maxOutputTokens(AiConstants.EXTRACTION_MAX_OUTPUT_TOKENS)
-                .build();
-
-        GenerateContentResponse response = geminiClient.models.generateContent(
+        return openRouterClient.complete(
                 AiConstants.MEMORY_EXTRACTION_MODEL,
-                Content.builder().role("user").parts(Part.fromText(PROMPT_TEMPLATE.formatted(transcript))).build(),
-                config);
-
-        response.usageMetadata().ifPresent(usage -> log.info(
-                "Gemini tokens used (conversation summary): total={}, prompt={}, candidates={}",
-                usage.totalTokenCount().orElse(null),
-                usage.promptTokenCount().orElse(null),
-                usage.candidatesTokenCount().orElse(null)));
-
-        return response.text();
+                null,
+                PROMPT_TEMPLATE.formatted(transcript),
+                AiConstants.EXTRACTION_MAX_OUTPUT_TOKENS,
+                false,
+                "conversation summary");
     }
 
     private String buildTranscript(List<ConversationMessageEntity> messages) {
